@@ -1,0 +1,238 @@
+## The objective of this code is to read in all the relevant data from the decawave experiments
+## Perform some
+##
+
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import os
+
+file_locLOS_listner = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\Decawave_Test01_IDEAS_REDO_listner'
+file_locLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS'
+file_locNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\QLAB'
+file_locKFNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\Test03_QLAB'
+
+def read_file(ffp):
+    """
+    This function takes in a ffp of each file in the directory and outputs the experimental coordinates
+    :param ffp: (a string) the full file path of each file in a directory
+    :return data: data list of tuples each of which contain the experimental x and y_coordinate
+    """
+    i = 0
+    x_parsed = []
+    y_parsed = []
+    x_coord_string = ""
+    y_coord_string = ""
+    with open(ffp, 'r') as file:
+        for line in file:
+            if ( (i % 3) == 0 and len(line) > 20 ):
+                parse = line.split(' ')
+                for item in parse:
+                    if (item.startswith(',x')):
+                        x_coord = item.split(':')[1].lstrip(',').rstrip(',')
+                        for char in x_coord:
+                            if ( (char).isalnum() or char =='.'):
+                                x_coord_string +=char
+                        x_coord_float = float(x_coord_string)
+                        x_parsed.append(x_coord_float)
+                        x_coord_string = ""
+                    elif item.startswith(',y'):
+                        y_coord = item.split(':')[1].lstrip(',').rstrip(',')
+                        for char in y_coord:
+                            if ( (char).isalnum() or char =='.'):
+                                y_coord_string +=char
+                        y_coord_float = float(y_coord_string)
+                        y_parsed.append(y_coord_float)
+                        y_coord_string = ""
+            i+=1
+    data = list(zip(x_parsed,y_parsed))
+    return(data)
+
+def getdataLOS():
+    """
+    this function reads in the .xlsx file where all the data is stored
+    and returns the theoretical and experimental results
+    :return:
+        theor_result: A list of theoretical results Y_coordinates of Decawave Tag
+        exp_result: a list of the experimental Y_coordinates of Decawave tag
+    """
+    df = pd.read_excel(r'Test01_LOS_IDEAS_TEK_4_22.xlsx', header = 0)
+    anc_loc = df.loc[:,'Anchor Location(M)'].tolist()
+    theor_result = df.loc[:,'Physical Tag Measurements(M)'].tolist()
+    exp_result = df.loc[:,'Decawave Tag Measurements(M)'].tolist()
+    return(theor_result,exp_result)
+
+def parsedataLOS():
+    """
+    reads the file directory where the LOS data is stored and goes through every
+    text file calling read_file to get the experimental data, while determining the
+    theoretical measurements via text file names
+    :return: LOS_Data: data containing both the theoretical and experimental data
+            stored as an P*M(Number of tag positions by measurements) dimensions list of two tuples of two elements
+             with the theoretical tuple being the first in each list
+    """
+    theor_coord = []
+    exp_coord = []
+    LOS_data = []
+    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\Decawave_Test01_IDEAS_REDO_listner'):
+        if file.endswith('.txt'):
+            file_path = f"{file_locLOS_listner}\{file}"
+            data_exp = read_file(file_path)
+            exp_coord.append(data_exp)
+            new_file = file.replace('dot', '.')
+            new_file  = new_file.rstrip('Y.txt')
+            coords = new_file.split('X')
+            theor_coord.append((coords[0], coords[1]))
+    for x in range(len(theor_coord)):
+        exp_coord[x].insert(0,theor_coord[x])
+        LOS_data.append(exp_coord[x])
+    return LOS_data
+
+def readexpNLOSCoor(X,Y):
+    """
+    This function takes as input the x_and Y coordinates for each tag position
+    and creates a tuple in (X,Y) form ultimately returning a list of tuples
+    with each tuple being the X,Y coordinate of each tag per second per position
+    :param X: Experimental X_Values for each data sheet(tag) position
+              stored as a list
+    :param Y:  Experimental Y_Values for each data sheet(tag) position
+              stored as a list
+    :return:Temp: A list containing the X,Y coordinates of each tag measurement per tag position 
+    """
+    temp = []
+    for i in range(len(X)):
+        temp.append((X[i], Y[i]))
+    return temp
+
+def parsedataNLOS():
+    """
+    This function Parses through every file in the NLOS directory and returns N-dimensional list equivalent to number of
+    files in directory with each dimension containing a list of tuples of the experimental coordinates and theoretical
+    as the last element in each R list
+    :return: exp_data an N*R list of tuples with each tuple being either an experimental X*Y coord, the theor is first
+    """
+    exp_data = []
+    theor_coord = []
+    fctr = 0#file counter
+    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\QLAB'):
+        ffp = file_locNLOS + '/' + file
+        file = file.rstrip('.csv')
+        file = file.replace('dot','.')
+        pars_exp = file.split('y')
+        X_coord = float(pars_exp[0].lstrip('x'))##Theoretical X_Coordinate
+        Y_coord = float(pars_exp[1])##Theoretical Y_Coordinate
+        theor_coord.append((X_coord,Y_coord))
+        df = pd.read_csv(ffp, header = 0)
+        x_exp = df.loc[:,'x_pos'].tolist()##X coordinate per each tag position
+        y_exp = df.loc[:,'y_pos'].tolist()##Y coordinate per each tag position
+        exp_coord = readexpNLOSCoor(x_exp,y_exp)
+        exp_coord.insert(0,(X_coord,Y_coord))
+        exp_data.append(exp_coord)
+        fctr+=1
+    return(exp_data)
+
+def parsedataKNLOS():
+    """
+    This function Parses through every file in the KNLOS directory and returns P*M-dimensional list equivalent to number
+     of files in directory with each dimension containing a list of tuples of the observed vs updated position
+      and theoretical as the first element in each P_list
+    :return: data_tot an N*R list of tuples with each tuple being either the theoretical pos, or obs vs updated_pos
+    """
+    theor_coord = []
+    data_tot = []
+    i = 0
+    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\Test03_QLAB'):
+        ffp = file_locKFNLOS + '/' + file
+        file = file.rstrip('.csv')
+        file = file.replace('dot','.')
+        pars_exp = file.split('X')
+        X = pars_exp[0]
+        Y = pars_exp[1].rstrip('Y')
+        theor_coord.append((X,Y))
+        df = pd.read_csv(ffp, header = 0)
+        obs_pos = df.loc[:,'Obs_Position'].tolist()
+        up_state  = df.loc[:,'Updated_State'].tolist()
+        KF = readexpNLOSCoor(obs_pos,up_state)
+        KF.insert(0,(X,Y))
+        data_tot.append(KF)
+    return data_tot
+
+def meanerrorLOS(theor_result,exp_result,LOS_data):
+    """
+    Ths Function takes in as input the theoretical and measured Decawave values and
+    outputs a chart of the meausured vs
+    :param tag_loc_LOS: a list of the theoretical y_values of the tag
+    :param dec_loc_LOS: a list of the measured/experimental y_values of the tag
+    :return:
+    """
+    diff = []
+    for tag_pos in LOS_data:
+        i = 0#measures every line in new document starts at zero after new tag_pos,doc
+        for meas in tag_pos:
+            if (i == 0):
+                theor_x,theor_y = meas##Unpacks Theoretical values per tag placement
+                theor_x = float(theor_x)
+                theor_y = float(theor_y)
+            else:
+                meas_x,meas_y = meas
+                diff.append(meas_x-theor_x)
+            i+=1
+    x_title = 'Real Distance (m)'
+    y_title =  'Measured Distance (m)'
+    x_ideal = []##Real distance ideal
+    y_ideal = []## measured distance ideal
+    for i in range(61):
+        x_ideal.append(i * 0.125)
+        y_ideal.append(i * 0.125)
+    plt.title("Measured Versus Real Distance for LOS")
+    plt.xlabel(x_title)
+    plt.ylabel(y_title)
+    plt.scatter(theor_result,exp_result, label = 'Measured')
+    plt.plot(x_ideal,y_ideal, label = 'Ideal')
+    plt.legend()
+    #plt.show()
+
+def hist_LOS(theor_result,exp_result,LOS_data):
+    diff = []
+    for tag_pos in LOS_data:
+        i = 0
+        for meas in tag_pos:
+            if i == 0:
+                theor_x,theor_y = meas
+            if (i > 0):
+                curr_x,curr_y = meas
+                diff_x_temp = curr_x - float(theor_x)
+                diff_y_temp = curr_y - float(theor_y)
+                diff.append((diff_x_temp,diff_y_temp))
+            i+=1
+
+
+def range_errorLOS(parsed_LOS):
+    """
+    :param parsed_LOS:
+    :return:
+    """
+    diff_X = []
+    diff_Y = []
+    for r in parsed_LOS:
+        i = 1
+        temp = r
+        while i < len(temp):
+            print(i)
+            i+=1
+        print("dildo")
+
+
+if __name__ == '__main__':
+    theor_los,exp_los = getdataLOS() ## Function returns theoretical and experiment Y_coordinates as a list
+    data_LOS = parsedataLOS()##Function to return the LOS data's coordinates as tuple w/ theor_first
+    data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as L of tuples w/theoretical first
+    data_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
+    meanerrorLOS(theor_los,exp_los,data_LOS)
+    #hist_LOS(theor_los,exp_los,data_LOS)
+    #range_errorLOS(data_LOS)
+    #cdfLOS(theor_los,exp_los,data_LOS)
+
+
+
