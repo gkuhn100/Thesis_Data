@@ -158,6 +158,13 @@ def parsedataKNLOS():
         data_tot.append(KF)
     return data_tot
 
+
+def return_LOSarray():
+    """
+    :return:
+    """
+    pass
+
 def meanerrorLOS(theor_result,exp_result,LOS_data):
     """
     Ths Function takes in as input the theoretical and measured Decawave values and
@@ -166,47 +173,52 @@ def meanerrorLOS(theor_result,exp_result,LOS_data):
     :param dec_loc_LOS: a list of the measured/experimental y_values of the tag
     :return:
     """
-    diff = []
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    x_ideal = [0,1.5]##Real distance ideal
+    y_ideal = [0,2.25]## measured distance ideal
+    tc = 0
+    th = 0
     for tag_pos in LOS_data:
-        i = 0#measures every line in new document starts at zero after new tag_pos,doc
-        for meas in tag_pos:
-            if (i == 0):
-                theor_x,theor_y = meas##Unpacks Theoretical values per tag placement
-                theor_x = float(theor_x)
-                theor_y = float(theor_y)
-            else:
-                meas_x,meas_y = meas
-                diff.append(meas_x-theor_x)
-            i+=1
-    x_title = 'Real Distance (m)'
-    y_title =  'Measured Distance (m)'
-    x_ideal = []##Real distance ideal
-    y_ideal = []## measured distance ideal
-    for i in range(61):
-        x_ideal.append(i * 0.125)
-        y_ideal.append(i * 0.125)
-    plt.title("Measured Versus Real Distance for LOS")
-    plt.xlabel(x_title)
-    plt.ylabel(y_title)
-    plt.scatter(theor_result,exp_result, label = 'Measured')
-    plt.plot(x_ideal,y_ideal, label = 'Ideal')
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    fig,ax = plt.subplots()
+    #ax.axline((0, 0), slope=.25, color='C0', label='by slope')
+    plt.plot(x_ideal,y_ideal)
+    plt.scatter(x_coord_theor_list,x_coord_real_list, label = 'X-Coordinates', color = 'blue')
+    plt.scatter(y_coord_theor_list,y_coord_real_list, label = 'Y-Coordinates', marker='x', color = 'red')
+    plt.title('Theoretical versus Measured Decawave values in 2-dimensional coordinate space')
+    plt.xlabel("Theoretical values (M)")
+    plt.ylabel("Experimental values (M)")
     plt.legend()
-    #plt.show()
+    plt.show()
+
 
 def hist_LOS(theor_result,exp_result,LOS_data):
     diff = []
     for tag_pos in LOS_data:
-        i = 0
+        i = 1
+        #theor_x,theor_y = tag_pos()
+        #print(theor_x)
+        print(tag_pos)
         for meas in tag_pos:
-            if i == 0:
-                theor_x,theor_y = meas
-            if (i > 0):
-                curr_x,curr_y = meas
-                diff_x_temp = curr_x - float(theor_x)
-                diff_y_temp = curr_y - float(theor_y)
-                diff.append((diff_x_temp,diff_y_temp))
-            i+=1
-
+            i+=1##incrememnt
 
 def range_errorLOS(parsed_LOS):
     """
@@ -229,10 +241,7 @@ if __name__ == '__main__':
     data_LOS = parsedataLOS()##Function to return the LOS data's coordinates as tuple w/ theor_first
     data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as L of tuples w/theoretical first
     data_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
-    meanerrorLOS(theor_los,exp_los,data_LOS)
+    #meanerrorLOS(theor_los,exp_los,data_LOS)
     #hist_LOS(theor_los,exp_los,data_LOS)
     #range_errorLOS(data_LOS)
     #cdfLOS(theor_los,exp_los,data_LOS)
-
-
-
