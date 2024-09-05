@@ -1,10 +1,10 @@
 ## The objective of this code is to read in all the relevant data from the decawave experiments
 ## Perform some
 ##
-
-
+import matplotlib.pyplot
 import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.ticker as tck
 import numpy as np
 import os
 
@@ -180,7 +180,7 @@ def meanerrorLOS(theor_result,exp_result,LOS_data):
     x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
     y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
     x_ideal = [0,1.5]##Real distance ideal
-    y_ideal = [0,2.25]## measured distance ideal
+    y_ideal = [1.5,2.5]## measured distance ideal
     tc = 0
     th = 0
     for tag_pos in LOS_data:
@@ -198,9 +198,7 @@ def meanerrorLOS(theor_result,exp_result,LOS_data):
         x_theor,y_theor = tuple
         x_coord_theor_list.append(x_theor)
         y_coord_theor_list.append(y_theor)
-    fig,ax = plt.subplots()
-    #ax.axline((0, 0), slope=.25, color='C0', label='by slope')
-    plt.plot(x_ideal,y_ideal)
+
     plt.scatter(x_coord_theor_list,x_coord_real_list, label = 'X-Coordinates', color = 'blue')
     plt.scatter(y_coord_theor_list,y_coord_real_list, label = 'Y-Coordinates', marker='x', color = 'red')
     plt.title('Theoretical versus Measured Decawave values in 2-dimensional coordinate space')
@@ -210,15 +208,44 @@ def meanerrorLOS(theor_result,exp_result,LOS_data):
     plt.show()
 
 
-def hist_LOS(theor_result,exp_result,LOS_data):
-    diff = []
+def hist_LOS(LOS_data):
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    diff_x_list = []
+    diff_y_list = []
+    x_ideal = [0,1.5]##Real distance ideal
+    y_ideal = [1.5,2.5]## measured distance ideal
+    tc = 0
+    th = 0
     for tag_pos in LOS_data:
-        i = 1
-        #theor_x,theor_y = tag_pos()
-        #print(theor_x)
-        print(tag_pos)
-        for meas in tag_pos:
-            i+=1##incrememnt
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    for i in range(len(x_coord_theor_list)):
+        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
+        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
+    fig,(ax0,ax1) = plt.subplots(1,2)
+    ax0.hist(diff_x_list)
+    ax1.hist(diff_y_list)
+    #matplotlib.pyplot.hist(diff_x_list)
+    #matplotlib.pyplot.hist(diff_y_list)
+    plt.show()
+
 
 def range_errorLOS(parsed_LOS):
     """
@@ -242,6 +269,9 @@ if __name__ == '__main__':
     data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as L of tuples w/theoretical first
     data_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
     #meanerrorLOS(theor_los,exp_los,data_LOS)
-    #hist_LOS(theor_los,exp_los,data_LOS)
+    hist_LOS(data_LOS)
     #range_errorLOS(data_LOS)
     #cdfLOS(theor_los,exp_los,data_LOS)
+
+
+
