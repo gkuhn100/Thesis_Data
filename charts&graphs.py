@@ -4,6 +4,7 @@
 import matplotlib.pyplot
 import matplotlib.pyplot as plt
 import pandas as pd
+import statistics
 import matplotlib.ticker as tck
 import numpy as np
 import os
@@ -217,8 +218,7 @@ def hist_LOS(LOS_data):
     y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
     diff_x_list = []
     diff_y_list = []
-    x_ideal = [0,1.5]##Real distance ideal
-    y_ideal = [1.5,2.5]## measured distance ideal
+
     tc = 0
     th = 0
     for tag_pos in LOS_data:
@@ -247,20 +247,85 @@ def hist_LOS(LOS_data):
     plt.show()
 
 
-def range_errorLOS(parsed_LOS):
+def range_errorLOS(LOS_data):
     """
     :param parsed_LOS:
     :return:
     """
-    diff_X = []
-    diff_Y = []
-    for r in parsed_LOS:
-        i = 1
-        temp = r
-        while i < len(temp):
-            print(i)
-            i+=1
-        print("dildo")
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    diff_x_list = []## A list of the different between the measured versus theoretical X measurements
+    diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
+    error_3 = []
+    error_4 = []
+    error_5 = []
+    tc = 0
+    th = 0
+    for tag_pos in LOS_data:
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    for i in range(len(x_coord_theor_list)):
+        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
+        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
+    for count,item in enumerate(y_coord_theor_list):
+        pass
+        #print(count,item)###130 1.5-3.0 135-210 3.25-4.5 210-250 4.5-5.5
+    error_3 = diff_y_list[:131]
+    error_4 = diff_y_list[131:211]
+    error_5 = diff_y_list[211:]
+    st4  = statistics.stdev(error_4)
+    st5 = statistics.stdev(error_5)
+
+
+def cdfLOS_data(data_LOS):
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    diff_x_list = []## A list of the different between the measured versus theoretical X measurements
+    diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
+    error_3 = []
+    error_4 = []
+    error_5 = []
+    tc = 0
+    th = 0
+    for tag_pos in LOS_data:
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    for i in range(len(x_coord_theor_list)):
+        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
+        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
+
 
 
 if __name__ == '__main__':
@@ -269,9 +334,9 @@ if __name__ == '__main__':
     data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as L of tuples w/theoretical first
     data_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
     #meanerrorLOS(theor_los,exp_los,data_LOS)
-    hist_LOS(data_LOS)
-    #range_errorLOS(data_LOS)
-    #cdfLOS(theor_los,exp_los,data_LOS)
+    #hist_LOS(data_LOS)
+    range_errorLOS(data_LOS)
+    #cdfLOS(data_LOS)
 
 
 
