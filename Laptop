@@ -1,17 +1,18 @@
 ## The objective of this code is to read in all the relevant data from the decawave experiments
 ## Perform some
 ##
-
-
+import matplotlib.pyplot
 import matplotlib.pyplot as plt
 import pandas as pd
+import statistics
+import matplotlib.ticker as tck
 import numpy as np
 import os
 
 file_locLOS_listner = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\Decawave_Test01_IDEAS_REDO_listner'
-file_locLOS = r'C:\Users\Gregk\Downloads\Test1LOS\Test1LOS\Decawave_Test01_IDEAS_REDO_listner'
-#file_locNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\QLAB'
-#file_locKFNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\Test03_QLAB'
+file_locLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS'
+file_locNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\QLAB'
+file_locKFNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\Test03_QLAB'
 
 def read_file(ffp):
     """
@@ -75,9 +76,9 @@ def parsedataLOS():
     theor_coord = []
     exp_coord = []
     LOS_data = []
-    for file in os.listdir(r'C:\Users\Gregk\Downloads\Test1LOS\Test1LOS\Decawave_Test01_IDEAS_REDO_listner'):
+    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\Decawave_Test01_IDEAS_REDO_listner'):
         if file.endswith('.txt'):
-            file_path = f"{file_locLOS }\{file}"
+            file_path = f"{file_locLOS_listner}\{file}"
             data_exp = read_file(file_path)
             exp_coord.append(data_exp)
             new_file = file.replace('dot', '.')
@@ -88,6 +89,75 @@ def parsedataLOS():
         exp_coord[x].insert(0,theor_coord[x])
         LOS_data.append(exp_coord[x])
     return LOS_data
+
+def readexpNLOSCoor(X,Y):
+    """
+    This function takes as input the x_and Y coordinates for each tag position
+    and creates a tuple in (X,Y) form ultimately returning a list of tuples
+    with each tuple being the X,Y coordinate of each tag per second per position
+    :param X: Experimental X_Values for each data sheet(tag) position
+              stored as a list
+    :param Y:  Experimental Y_Values for each data sheet(tag) position
+              stored as a list
+    :return:Temp: A list containing the X,Y coordinates of each tag measurement per tag position 
+    """
+    temp = []
+    for i in range(len(X)):
+        temp.append((X[i], Y[i]))
+    return temp
+
+def parsedataNLOS():
+    """
+    This function Parses through every file in the NLOS directory and returns N-dimensional list equivalent to number of
+    files in directory with each dimension containing a list of tuples of the experimental coordinates and theoretical
+    as the last element in each R list
+    :return: exp_data an N*R list of tuples with each tuple being either an experimental X*Y coord, the theor is first
+    """
+    exp_data = []
+    theor_coord = []
+    fctr = 0#file counter
+    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\QLAB'):
+        ffp = file_locNLOS + '/' + file
+        file = file.rstrip('.csv')
+        file = file.replace('dot','.')
+        pars_exp = file.split('y')
+        X_coord = float(pars_exp[0].lstrip('x'))##Theoretical X_Coordinate
+        Y_coord = float(pars_exp[1])##Theoretical Y_Coordinate
+        theor_coord.append((X_coord,Y_coord))
+        df = pd.read_csv(ffp, header = 0)
+        x_exp = df.loc[:,'x_pos'].tolist()##X coordinate per each tag position
+        y_exp = df.loc[:,'y_pos'].tolist()##Y coordinate per each tag position
+        exp_coord = readexpNLOSCoor(x_exp,y_exp)
+        exp_coord.insert(0,(X_coord,Y_coord))
+        exp_data.append(exp_coord)
+        fctr+=1
+    return(exp_data)
+
+def parsedataKNLOS():
+    """
+    This function Parses through every file in the KNLOS directory and returns P*M-dimensional list equivalent to number
+     of files in directory with each dimension containing a list of tuples of the observed vs updated position
+      and theoretical as the first element in each P_list
+    :return: data_tot an N*R list of tuples with each tuple being either the theoretical pos, or obs vs updated_pos
+    """
+    theor_coord = []
+    data_tot = []
+    i = 0
+    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\Test03_QLAB'):
+        ffp = file_locKFNLOS + '/' + file
+        file = file.rstrip('.csv')
+        file = file.replace('dot','.')
+        pars_exp = file.split('X')
+        X = pars_exp[0]
+        Y = pars_exp[1].rstrip('Y')
+        theor_coord.append((X,Y))
+        df = pd.read_csv(ffp, header = 0)
+        obs_pos = df.loc[:,'Obs_Position'].tolist()
+        up_state  = df.loc[:,'Updated_State'].tolist()
+        KF = readexpNLOSCoor(obs_pos,up_state)
+        KF.insert(0,(X,Y))
+        data_tot.append(KF)
+    return data_tot
 
 
 def return_LOSarray():
@@ -111,7 +181,7 @@ def meanerrorLOS(theor_result,exp_result,LOS_data):
     x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
     y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
     x_ideal = [0,1.5]##Real distance ideal
-    y_ideal = [0,2.25]## measured distance ideal
+    y_ideal = [1.5,2.5]## measured distance ideal
     tc = 0
     th = 0
     for tag_pos in LOS_data:
@@ -129,9 +199,7 @@ def meanerrorLOS(theor_result,exp_result,LOS_data):
         x_theor,y_theor = tuple
         x_coord_theor_list.append(x_theor)
         y_coord_theor_list.append(y_theor)
-    fig,ax = plt.subplots()
-    #ax.axline((0, 0), slope=.25, color='C0', label='by slope')
-    plt.plot(x_ideal,y_ideal)
+
     plt.scatter(x_coord_theor_list,x_coord_real_list, label = 'X-Coordinates', color = 'blue')
     plt.scatter(y_coord_theor_list,y_coord_real_list, label = 'Y-Coordinates', marker='x', color = 'red')
     plt.title('Theoretical versus Measured Decawave values in 2-dimensional coordinate space')
@@ -140,39 +208,309 @@ def meanerrorLOS(theor_result,exp_result,LOS_data):
     plt.legend()
     plt.show()
 
+def hist_LOS(LOS_data):
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    diff_x_list = []
+    diff_y_list = []
 
-def hist_LOS(theor_result,exp_result,LOS_data):
-    diff = []
+    tc = 0
+    th = 0
     for tag_pos in LOS_data:
-        i = 1
-        #theor_x,theor_y = tag_pos()
-        #print(theor_x)
-        print(tag_pos)
-        for meas in tag_pos:
-            i+=1##incrememnt
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    for i in range(len(x_coord_theor_list)):
+        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
+        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
+    fig,(ax0,ax1) = plt.subplots(1,2)
+    ax0.hist(diff_x_list)
+    ax1.hist(diff_y_list)
+    matplotlib.pyplot.hist(diff_x_list)
+    matplotlib.pyplot.hist(diff_y_list)
+    plt.show()
 
-def range_errorLOS(parsed_LOS):
+def range_errorLOS(LOS_data):
     """
     :param parsed_LOS:
     :return:
     """
-    diff_X = []
-    diff_Y = []
-    for r in parsed_LOS:
-        i = 1
-        temp = r
-        while i < len(temp):
-            print(i)
-            i+=1
-        print("dildo")
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    diff_x_list = []## A list of the different between the measured versus theoretical X measurements
+    diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
+    error_3 = []
+    error_4 = []
+    error_5 = []
+    tc = 0
+    th = 0
+    for tag_pos in LOS_data:
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    for i in range(len(x_coord_theor_list)):
+        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
+        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
+    for count,item in enumerate(y_coord_theor_list):
+        pass
+        #print(count,item)###130 1.5-3.0 135-210 3.25-4.5 210-250 4.5-5.5
+    error_3 = diff_y_list[:131]
+    error_4 = diff_y_list[131:211]
+    error_5 = diff_y_list[211:]
+    st4  = statistics.stdev(error_4)
+    st5 = statistics.stdev(error_5)
+
+def cdfLOS_dataLOS(LOS_data):
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    diff_x_list = []## A list of the different between the measured versus theoretical X measurements
+    diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
+    error_3 = []
+    error_4 = []
+    error_5 = []
+    tc = 0
+    th = 0
+    for tag_pos in LOS_data:
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    for i in range(len(x_coord_theor_list)):
+        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
+        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
+    cleanedList = [x for x in diff_x_list if str(x) != 'nan']
+    count, bins_count = np.histogram(cleanedList, bins=10)
+    pdf = count / sum(count)
+    cdf = np.cumsum(pdf)
+    # plotting PDF and CDF
+    plt.plot(bins_count[1:], pdf, color="red", label="PDF")
+    plt.plot(bins_count[1:], cdf, label="CDF")
+    plt.legend()
+    plt.show()
+
+
+def mean_errorNLOS(NLOS_data):
+    """
+    Ths Function takes in as input the NLOS data and graphs the measured vs. theoretical error of each point
+    :param NLOS_data: a p*m list of tuples, with  each measurement being a 2D coordinate; and first item always being theoretical
+    :return: N/A
+    """
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    for tag_pos in NLOS_data:
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    plt.scatter(x_coord_theor_list,x_coord_real_list, label = 'X-Coordinates', color = 'blue')
+    plt.scatter(y_coord_theor_list,y_coord_real_list, label = 'Y-Coordinates', marker='x', color = 'red')
+    plt.title('Theoretical versus Measured Decawave values in 2-dimensional coordinate space')
+    plt.xlabel("Theoretical values (m)")
+    plt.ylabel("Experimental values (m)")
+    plt.legend()
+    plt.show()
+
+def hist_NLOS(NLOS_data):
+    """
+    This function takes as input the NLOS data and displays two histograms of the measured error vs. frequency
+     for both X and Y measurments
+    :param NLOS_data: a p*m list of tuples, with  each measurement being a 2D coordinate; and first item always being theoretical
+    :return: N/A
+    """
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    diff_x_list = []
+    diff_y_list = []
+    tc = 0
+    th = 0
+    for tag_pos in NLOS_data:
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    for i in range(len(x_coord_theor_list)):
+        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
+        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
+    fig,(ax0,ax1) = plt.subplots(1,2)
+    ax0.hist(diff_x_list)
+    ax1.hist(diff_y_list)
+    matplotlib.pyplot.hist(diff_x_list)
+    matplotlib.pyplot.hist(diff_y_list)
+    plt.show()
+
+def range_errorNLOS(NLOS_data):
+    """
+    :param NLOS_data: a p*m list of tuples, with  each measurement being a 2D coordinate; and first item always being theoretical
+    :return: N/A
+    """
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    diff_x_list = []## A list of the different between the measured versus theoretical X measurements
+    diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
+    error_3 = []
+    error_4 = []
+    error_5 = []
+    tc = 0
+    th = 0
+    for tag_pos in NLOS_data:
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    for i in range(len(x_coord_theor_list)):
+        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
+        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
+
+    error_3 = diff_y_list[:131]
+    error_4 = diff_y_list[131:211]
+    error_5 = diff_y_list[211:]
+    st3 = statistics.stdev(error_3)
+    st4  = statistics.stdev(error_4)
+    st5 = statistics.stdev(error_5)
+    std = [st3,st4,st5]
+    names = ['3m', '4m', '5']
+    plt.bar(names,std)
+    plt.show()
+
+def cdfNLOS_data(NLOS_data):
+    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
+    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
+    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
+    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
+    diff_x_list = []## A list of the different between the measured versus theoretical X measurements
+    diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
+    error_3 = []
+    error_4 = []
+    error_5 = []
+    tc = 0
+    th = 0
+    for tag_pos in NLOS_data:
+        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+            data_real.append((tag_pos[meas]))
+            data_theor.append(tag_pos[0])
+    for tuple in data_real:
+        tc+=1
+        x_real,y_real = tuple
+        x_coord_real_list.append(x_real)
+        y_coord_real_list.append(y_real)
+    for tuple in data_theor:
+        th+=1
+        x_theor,y_theor = tuple
+        x_coord_theor_list.append(x_theor)
+        y_coord_theor_list.append(y_theor)
+    for i in range(len(x_coord_theor_list)):
+        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
+        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
+    cleanedList = [x for x in diff_x_list if str(x) != 'nan']
+    count, bins_count = np.histogram(cleanedList, bins=10)
+    pdf = count / sum(count)
+    cdf = np.cumsum(pdf)
+    # plotting PDF and CDF
+    plt.plot(bins_count[1:], pdf, color="red", label="PDF")
+    plt.plot(bins_count[1:], cdf, label="CDF")
+    plt.legend()
+    plt.show()
 
 
 if __name__ == '__main__':
     #theor_los,exp_los = getdataLOS() ## Function returns theoretical and experiment Y_coordinates as a list
-    data_LOS = parsedataLOS()##Function to return the LOS data's coordinates as tuple w/ theor_first
-    #data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as L of tuples w/theoretical first
+    #data_LOS = parsedataLOS()##Function to return the LOS data's coordinates as tuple w/ theor_first
     #data_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
     #meanerrorLOS(theor_los,exp_los,data_LOS)
-    #hist_LOS(theor_los,exp_los,data_LOS)
+    #hist_LOS(data_LOS)
     #range_errorLOS(data_LOS)
-    #cdfLOS(theor_los,exp_los,data_LOS)
+    #cdfLOS_dataLOS(data_LOS)
+    data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as List of tuples w/theoretical first
+    mean_errorNLOS(data_NLOS)##Mean error of NLOS data
+    #hist_NLOS(data_NLOS)##histogram of NLOS data
+    #range_errorNLOS(data_NLOS)##range error of NLOS data
+    #cdfNLOS_data(data_NLOS)
+
+
+
