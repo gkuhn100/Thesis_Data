@@ -11,7 +11,7 @@ import os
 
 #file_locLOS_listner = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\BS_data'
 file_locLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\BS_data'
-file_locNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\QLAB'
+file_locNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\BS_Data'
 file_locKFNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\Test03_QLAB'
 
 def read_file(ffp):
@@ -116,7 +116,7 @@ def parsedataNLOS():
     exp_data = []
     theor_coord = []
     fctr = 0#file counter
-    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\QLAB'):
+    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\BS_Data'):
         ffp = file_locNLOS + '/' + file
         file = file.rstrip('.csv')
         file = file.replace('dot','.')
@@ -142,7 +142,7 @@ def return_LOSarray():
 def meanerrorLOS(LOS_data):
     """
     Ths Function takes in as input the theoretical and measured Decawave values and
-    outputs a chart of the meausured vs
+    outputs a chart of the meausured vs theroetical LOS error
     :param tag_loc_LOS: a list of the theoretical y_values of the tag
     :param dec_loc_LOS: a list of the measured/experimental y_values of the tag
     :param los_data:
@@ -239,9 +239,7 @@ def range_errorLOS(LOS_data):
     y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
     diff_x_list = []## A list of the different between the measured versus theoretical X measurements
     diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
-    error_3 = []
-    error_4 = []
-    error_5 = []
+
     tc = 0
     th = 0
     for tag_pos in LOS_data:
@@ -262,22 +260,23 @@ def range_errorLOS(LOS_data):
     for i in range(len(x_coord_theor_list)):
         diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
         diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
-    error_3 = diff_y_list[:131]## A tuple of every range error from
-    error_4 = diff_y_list[131:211]## A tuple of every range error from
-    error_5 = diff_y_list[211:]## A tuple of every range error from
+    error_3 = diff_y_list[:132]## A tuple of every range error from
+    error_4 = diff_y_list[132:208]## A tuple of every range error from
+    error_5 = diff_y_list[208:]## A tuple of every range error from
     st3 =statistics.stdev(error_3)
     st4  = statistics.stdev(error_4)
     st5 = statistics.stdev(error_5)
-    ranges = ['low', 'med', 'high']
+    ranges = ['0-3', '3.25 - 4.5', '5.0 - 5.5']
     stds = [st3, st4, st5]
     plt.bar(ranges,stds, color = 'green')
-    plt.xlabel("Ranges")
+    plt.xlabel("Range Intervals (m) ")
     plt.ylabel('Standard Deviation Errors(M)')
-    plt.title("Standard deviation of Decawave Positioning errors in Meters")
+    plt.title("Standard deviation of Decawave Positioning errors in LOS")
     plt.show()
 
 def cdf_dataLOS(LOS_data):
     """
+    This function calculates and displays the CDF of range errors in LOS
     :param LOS_data: A P*M nested list of tuples that contains 2D positioning information of each tag
     The first element in each list is a theoretical and the rest are experimental
     :return: NA
@@ -310,12 +309,14 @@ def cdf_dataLOS(LOS_data):
     for i in range(len(x_coord_theor_list)):
         diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
         diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
-    print(diff_y_list)
     cleanedList = [x for x in diff_x_list if str(x) != 'nan']
     count, bins_count = np.histogram(cleanedList, bins=10)
     pdf = count / sum(count)
     cdf = np.cumsum(pdf)
     plt.plot(bins_count[1:], cdf, label="CDF")
+    plt.title('Cumulative Density Function(CDF) of Positioning error in LOS')
+    plt.xlabel('Localization Error(m)')
+    plt.ylabel('Probability')
     plt.legend()
     plt.show()
 
@@ -325,26 +326,32 @@ def mean_errorNLOS(NLOS_data):
     :param NLOS_data: a p*m list of tuples, with  each measurement being a 2D coordinate; and first item always being theoretical
     :return: N/A
     """
+    ctr = 0
+    i = 0
     data_real =  [] ## a list of tuples of real tag measuremnets in 2D
     data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
-    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
-    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
-    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
-    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
-    for tag_pos in NLOS_data:
-        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+    data_final = [] ## a list of tuples of
+    theor_list = [] ## list of floats
+    real_list = []  ## list of floats
+
+    for tag_pos in NLOS_data:##The total number of postions the tag is place at each one
+        for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
             data_real.append((tag_pos[meas]))
             data_theor.append(tag_pos[0])
-    for tuple in data_real:
-        x_real,y_real = tuple
-        x_coord_real_list.append(x_real)
-        y_coord_real_list.append(y_real)
     for tuple in data_theor:
-        x_theor,y_theor = tuple
-        x_coord_theor_list.append(x_theor)
-        y_coord_theor_list.append(y_theor)
-    ydf = pd.DataFrame({'Theoretical Measurements': y_coord_theor_list, 'Experimental Measurements': y_coord_real_list})
-    ydf.to_excel('Mean_Erorr_NLOS.xlsx', sheet_name='sheet1', index=False)
+        X_real,Y_real = data_real[ctr]
+        X_theor,Y_theor = data_theor[ctr]
+        X_coord = (X_real,X_theor)
+        Y_coord = (Y_real,Y_theor)
+        data_final.append(X_coord)
+        data_final.append(Y_coord)
+        ctr+=1
+    for tuple in data_final:
+        real,theor = tuple
+        theor_list.append(theor)
+        real_list.append(real)
+    df = pd.DataFrame({'Theoretical Measurements': theor_list, 'Experimental Measurements': real_list})
+    df.to_excel('Mean_Erorr_NLOS.xlsx', sheet_name='sheet1', index=False)
 
 def hist_NLOS(NLOS_data):
     """
@@ -365,7 +372,7 @@ def hist_NLOS(NLOS_data):
     th = 0
     for tag_pos in NLOS_data:
         i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
-        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+        for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
             data_real.append((tag_pos[meas]))
             data_theor.append(tag_pos[0])
     for tuple in data_real:
@@ -382,10 +389,12 @@ def hist_NLOS(NLOS_data):
         diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
         diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
     fig,(ax0,ax1) = plt.subplots(1,2)
-    ax0.hist(diff_x_list)
-    ax1.hist(diff_y_list)
-    matplotlib.pyplot.hist(diff_x_list)
-    matplotlib.pyplot.hist(diff_y_list)
+    ax0.hist(diff_y_list, bins = 20, range = (-1,1), color = 'blue', edgecolor = 'black')
+    ax0.set_title("Mean Error NLOS(m) X coordinates")
+    ax0.set(xlabel='Mean Error(m)',ylabel='Occurences')
+    ax1.hist(diff_y_list,bins = 20, color = 'red', edgecolor = 'black')
+    ax1.set_title("Mean Error NLOS(m) Y coordinates")
+    ax1.set(xlabel='Mean Error(m)',ylabel='Occurences')
     plt.show()
 
 def range_errorNLOS(NLOS_data):
@@ -401,9 +410,6 @@ def range_errorNLOS(NLOS_data):
     y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
     diff_x_list = []## A list of the different between the measured versus theoretical X measurements
     diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
-    error_3 = []
-    error_4 = []
-    error_5 = []
     tc = 0
     th = 0
     for tag_pos in NLOS_data:
@@ -424,16 +430,18 @@ def range_errorNLOS(NLOS_data):
     for i in range(len(x_coord_theor_list)):
         diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
         diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
-
-    error_3 = diff_y_list[:131]
-    error_4 = diff_y_list[131:211]
-    error_5 = diff_y_list[211:]
-    st3 = statistics.stdev(error_3)
+    error_3 = diff_y_list[:132]## A tuple of every range error from
+    error_4 = diff_y_list[132:208]## A tuple of every range error from
+    error_5 = diff_y_list[208:]## A tuple of every range error from
+    st3 =statistics.stdev(error_3)
     st4  = statistics.stdev(error_4)
     st5 = statistics.stdev(error_5)
-    std = [st3,st4,st5]
-    names = ['3m', '4m', '5']
-    plt.bar(names,std)
+    ranges = ['0-3', '3.25 - 4.5', '5.0 - 5.5']
+    stds = [st3, st4, st5]
+    plt.bar(ranges,stds, color = 'green')
+    plt.xlabel("Range Intervals (m) ")
+    plt.ylabel('Standard Deviation Errors(M)')
+    plt.title("Standard deviation of Decawave Positioning errors in LOS")
     plt.show()
 
 def cdfNLOS_data(NLOS_data):
@@ -472,9 +480,10 @@ def cdfNLOS_data(NLOS_data):
     count, bins_count = np.histogram(cleanedList, bins=10)
     pdf = count / sum(count)
     cdf = np.cumsum(pdf)
-    # plotting PDF and CDF
-    plt.plot(bins_count[1:], pdf, color="red", label="PDF")
     plt.plot(bins_count[1:], cdf, label="CDF")
+    plt.title('Cumulative Density Function(CDF) of Positioning error in NLOS')
+    plt.xlabel('Localization Error(m)')
+    plt.ylabel('Probability')
     plt.legend()
     plt.show()
 
@@ -509,7 +518,6 @@ def parsedataKNLOS():
         data_tot.append(KF)
     return data_tot
 
-
 def KLEANNLOS(data_tot):
     """
     :param data_tot: data_tot an N*R list of tuples with each tuple being either the theoretical pos, or obs vs updated_pos
@@ -541,16 +549,15 @@ def parse_KNLOS(measure):
 
 
 if __name__ == '__main__':
-    theor_los,exp_los = getdataLOS() ## Function returns theoretical and experiment Y_coordinates as a list
-    data_LOS = parsedataLOS()##Function to return the LOS data's coordinates as tuple w/ theor_first
+    #theor_los,exp_los = getdataLOS() ## Function returns theoretical and experiment Y_coordinates as a list
+    #data_LOS = parsedataLOS()##Function to return the LOS data's coordinates as tuple w/ theor_first
     #meanerrorLOS(data_LOS)
     #hist_LOS(data_LOS)
     #range_errorLOS(data_LOS)
-    cdf_dataLOS(data_LOS)
-    #data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as List of tuples w/theoretical first
-    #print(data_NLOS[0][0])
+    #cdf_dataLOS(data_LOS)
+    data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as List of tuples w/theoretical first
     #mean_errorNLOS(data_NLOS)##Mean error of NLOS data
-    #hist_NLOS(data_NLOS)##histogram of NLOS data
+    hist_NLOS(data_NLOS)##histogram of NLOS data
     #range_errorNLOS(data_NLOS)##range error of NLOS data
     #cdfNLOS_data(data_NLOS)
     #data_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
