@@ -12,7 +12,7 @@ import os
 #file_locLOS_listner = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\BS_data'
 file_locLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\BS_data'
 file_locNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test2NLOS\BS_Data'
-file_locKFNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\Test03_QLAB'
+file_locKFNLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\BS_Data'
 
 def read_file(ffp):
     """
@@ -132,12 +132,6 @@ def parsedataNLOS():
         exp_data.append(exp_coord)
         fctr+=1
     return(exp_data)
-
-def return_LOSarray():
-    """
-    :return:
-    """
-    pass
 
 def meanerrorLOS(LOS_data):
     """
@@ -333,7 +327,6 @@ def mean_errorNLOS(NLOS_data):
     data_final = [] ## a list of tuples of
     theor_list = [] ## list of floats
     real_list = []  ## list of floats
-
     for tag_pos in NLOS_data:##The total number of postions the tag is place at each one
         for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
             data_real.append((tag_pos[meas]))
@@ -360,123 +353,156 @@ def hist_NLOS(NLOS_data):
     :param NLOS_data: a p*m list of tuples, with  each measurement being a 2D coordinate; and first item always being theoretical
     :return: N/A
     """
+    ctr = 0
+    i = 0
     data_real =  [] ## a list of tuples of real tag measuremnets in 2D
     data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
-    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
-    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
-    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
-    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
-    diff_x_list = []
-    diff_y_list = []
-    tc = 0
-    th = 0
-    for tag_pos in NLOS_data:
-        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
+    data_final = [] ## a list of tuples of
+    theor_list = [] ## list of floats
+    real_list = []  ## list of floats
+    diff_list = [] ## A list containing the differences between theoretical and real measurements
+
+    for tag_pos in NLOS_data:##The total number of postions the tag is place at each one
         for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
             data_real.append((tag_pos[meas]))
             data_theor.append(tag_pos[0])
-    for tuple in data_real:
-        tc+=1
-        x_real,y_real = tuple
-        x_coord_real_list.append(x_real)
-        y_coord_real_list.append(y_real)
     for tuple in data_theor:
-        th+=1
-        x_theor,y_theor = tuple
-        x_coord_theor_list.append(x_theor)
-        y_coord_theor_list.append(y_theor)
-    for i in range(len(x_coord_theor_list)):
-        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
-        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
-    fig,(ax0,ax1) = plt.subplots(1,2)
-    ax0.hist(diff_y_list, bins = 20, range = (-1,1), color = 'blue', edgecolor = 'black')
-    ax0.set_title("Mean Error NLOS(m) X coordinates")
-    ax0.set(xlabel='Mean Error(m)',ylabel='Occurences')
-    ax1.hist(diff_y_list,bins = 20, color = 'red', edgecolor = 'black')
-    ax1.set_title("Mean Error NLOS(m) Y coordinates")
-    ax1.set(xlabel='Mean Error(m)',ylabel='Occurences')
+        X_real,Y_real = data_real[ctr]
+        X_theor,Y_theor = data_theor[ctr]
+        X_coord = (X_real,X_theor)
+        Y_coord = (Y_real,Y_theor)
+        data_final.append(X_coord)
+        data_final.append(Y_coord)
+        ctr+=1
+    for tuple in data_final:
+        real,theor = tuple
+        theor_list.append(theor)
+        real_list.append(real)
+    for i in range(len(theor_list)):
+        diff_list.append(real_list[i] - theor_list[i])
+    plt.hist(diff_list,bins=20, color = 'blue', edgecolor = 'black')
+    plt.xlabel('Error (m)')
+    plt.ylabel('Frequency')
+    plt.title("Frequency of Errors in (m) in NLOS scenario")
     plt.show()
+    plt.ylabel()
 
 def range_errorNLOS(NLOS_data):
     """
+    The objective of this function is to display the standard deviation of errors across different ranges; short,middle,long
     :param NLOS_data: a p*m list of tuples, with  each measurement being a 2D coordinate; and first item always being theoretical
     :return: N/A
     """
+    ctr = 0
+    i = 0
     data_real =  [] ## a list of tuples of real tag measuremnets in 2D
     data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
-    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
-    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
-    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
-    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
-    diff_x_list = []## A list of the different between the measured versus theoretical X measurements
-    diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
-    tc = 0
-    th = 0
-    for tag_pos in NLOS_data:
-        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
-        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+    data_final = [] ## a list of tuples of
+    theor_list = [] ## list of floats
+    real_list = []  ## list of floats
+    diff_list = [] ## list of difference between the two
+    short_error = []##list of errors from 0-3m
+    med_error = []##list of errors from 3.5-5.0.
+    long_error = []## list of errors from 5.5 - 7.5m
+
+    for tag_pos in NLOS_data:##The total number of postions the tag is place at each one
+        for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
             data_real.append((tag_pos[meas]))
             data_theor.append(tag_pos[0])
-    for tuple in data_real:
-        tc+=1
-        x_real,y_real = tuple
-        x_coord_real_list.append(x_real)
-        y_coord_real_list.append(y_real)
     for tuple in data_theor:
-        th+=1
-        x_theor,y_theor = tuple
-        x_coord_theor_list.append(x_theor)
-        y_coord_theor_list.append(y_theor)
-    for i in range(len(x_coord_theor_list)):
-        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
-        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
-    error_3 = diff_y_list[:132]## A tuple of every range error from
-    error_4 = diff_y_list[132:208]## A tuple of every range error from
-    error_5 = diff_y_list[208:]## A tuple of every range error from
-    st3 =statistics.stdev(error_3)
-    st4  = statistics.stdev(error_4)
-    st5 = statistics.stdev(error_5)
-    ranges = ['0-3', '3.25 - 4.5', '5.0 - 5.5']
-    stds = [st3, st4, st5]
+        X_real,Y_real = data_real[ctr]
+        X_theor,Y_theor = data_theor[ctr]
+        X_coord = (X_real,X_theor)
+        Y_coord = (Y_real,Y_theor)
+        data_final.append(X_coord)
+        data_final.append(Y_coord)
+        ctr+=1
+    for tuple in data_final:
+        real,theor = tuple
+        theor_list.append(theor)
+        real_list.append(real)
+    print(real_list)
+    for i in range(len(real_list)):
+        diff_list.append(real_list[i] - theor_list[i])
+    print(diff_list)
+    x_theor = theor_list[0::2]
+    y_theor = theor_list[1::2]
+    x_exp   = real_list[0::2]
+    y_exp   = real_list[1::2]
+    diff_x = []
+    diff_y = []
+    ## Getting the differences between theoretical and experimental values
+    for i in range(len(x_theor)):
+        diff_y.append(y_theor[i] - y_exp[i])
+        diff_x.append(x_theor[i] - x_exp[i])
+    short_error.append(diff_x[0:258])
+    med_error.append(diff_x[258::])
+    short_error.append(diff_y[0:84])
+    short_error.append(diff_y[171:200])
+    short_error.append(diff_y[258:345])##1.5
+    short_error.append(diff_y[345:374])##2.5
+    med_error.append(diff_y[374:403])##3.5
+    med_error.append(diff_y[403:432])##4.5
+    long_error.append(diff_y[432:461])##4.5
+    long_error.append(diff_y[200:229])##6.0
+    long_error.append(diff_y[84:113])#6.5
+    long_error.append(diff_y[461:490])#6.5
+    long_error.append(diff_y[200:229])#7.0
+    long_error.append(diff_y[229:258])#7.0
+    long_error.append(diff_y[490])#7.5
+
+    error_short = short_error[0] + short_error[1] + short_error[2] + short_error[3] + short_error[4]
+    error_med = med_error[0] + med_error[1] + med_error[2]
+    error_lon = long_error[0] + long_error[1] + long_error[2] + long_error[3] + long_error[4] + long_error[5]
+    error_lon.append(long_error[6])
+
+    std_short = statistics.stdev(error_short)
+    std_med   = statistics.stdev(error_med)
+    std_lon   = statistics.stdev(error_lon)
+
+    ranges = ['0-3', '3.5 - 5.0', '5.5 - 7.5']
+    stds = [std_short, std_med, std_lon]
     plt.bar(ranges,stds, color = 'green')
     plt.xlabel("Range Intervals (m) ")
     plt.ylabel('Standard Deviation Errors(M)')
-    plt.title("Standard deviation of Decawave Positioning errors in LOS")
+    plt.title("Standard deviation of Decawave Positioning errors in NLOS")
     plt.show()
 
 def cdfNLOS_data(NLOS_data):
+    """
+    The objective of this function is to display the cdf of the measurement errors
+    :param NLOS_data: NLOS_data: a p*m list of tuples, with  each measurement being a 2D coordinate; and first item always being theoretical
+    :return:  N/A
+    """
+
+    ctr = 0
+    i = 0
     data_real =  [] ## a list of tuples of real tag measuremnets in 2D
     data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
-    x_coord_real_list = [] ## an unpacked list of each X_real_measurement
-    y_coord_real_list = [] ## an unpacked list of each Y_real_measurement
-    x_coord_theor_list = [] ## an unpacked list of each X_real_measurement
-    y_coord_theor_list = [] ## an unpacked list of each Y_real_measurement
-    diff_x_list = []## A list of the different between the measured versus theoretical X measurements
-    diff_y_list = []## A list of the different between the measured versus theoretical Y measurements
-    error_3 = []
-    error_4 = []
-    error_5 = []
-    tc = 0
-    th = 0
-    for tag_pos in NLOS_data:
-        i = 1#measures every line in new document starts at first experimental measurement after new tag_pos,doc
-        for meas in range(1,len(tag_pos),1):##goes through each measurement5 line by line
+    data_final = [] ## a list of tuples of
+    theor_list = [] ## list of floats
+    real_list = []  ## list of floats
+    diff_list = [] ## A list containing the differences between theoretical and real measurements
+
+    for tag_pos in NLOS_data:##The total number of postions the tag is place at each one
+        for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
             data_real.append((tag_pos[meas]))
             data_theor.append(tag_pos[0])
-    for tuple in data_real:
-        tc+=1
-        x_real,y_real = tuple
-        x_coord_real_list.append(x_real)
-        y_coord_real_list.append(y_real)
     for tuple in data_theor:
-        th+=1
-        x_theor,y_theor = tuple
-        x_coord_theor_list.append(x_theor)
-        y_coord_theor_list.append(y_theor)
-    for i in range(len(x_coord_theor_list)):
-        diff_x_list.append(x_coord_real_list[i] - float(x_coord_theor_list[i]))
-        diff_y_list.append(y_coord_real_list[i] - float(y_coord_theor_list[i]))
-    cleanedList = [x for x in diff_x_list if str(x) != 'nan']
+        X_real,Y_real = data_real[ctr]
+        X_theor,Y_theor = data_theor[ctr]
+        X_coord = (X_real,X_theor)
+        Y_coord = (Y_real,Y_theor)
+        data_final.append(X_coord)
+        data_final.append(Y_coord)
+        ctr+=1
+    for tuple in data_final:
+        real,theor = tuple
+        theor_list.append(theor)
+        real_list.append(real)
+    for i in range(len(theor_list)):
+        diff_list.append(real_list[i] - theor_list[i])
+    cleanedList = [x for x in diff_list if str(x) != 'nan']
     count, bins_count = np.histogram(cleanedList, bins=10)
     pdf = count / sum(count)
     cdf = np.cumsum(pdf)
@@ -499,7 +525,7 @@ def parsedataKNLOS():
     complete_data = []
     i = 0
     c = 0
-    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\Test03_QLAB'):
+    for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\BS_Data'):
         ffp = file_locKFNLOS + '/' + file
         file = file.rstrip('.csv')
         file = file.replace('dot','.')
@@ -507,45 +533,50 @@ def parsedataKNLOS():
         X = float(pars_exp[0])
         Y = pars_exp[1].rstrip('Y')
         Y = float(Y)
-        theor_coord.append((X,Y))
+        theor_coord.append((X,Y))## The theoretical
         df = pd.read_csv(ffp, header = 0)
         obs_pos = df.loc[:,'Obs_Position'].tolist()
         up_state  = df.loc[:,'Updated_State'].tolist()
-        KF = readexpNLOSCoor(obs_pos,up_state)
-        for meas in KF:
-            final_data = parse_KNLOS(meas)
+        KF = parse_KNLOS(obs_pos,up_state)
         KF.insert(0,(X,Y))##Adds the theroritical X and Y coordinates
         data_tot.append(KF)
     return data_tot
 
-def KLEANNLOS(data_tot):
+def parse_KNLOS(obs,upd):
     """
-    :param data_tot: data_tot an N*R list of tuples with each tuple being either the theoretical pos, or obs vs updated_pos
+    Returns list called final which contains the observed and updated position
+    :param obs
+            upd
+    :return:obs - The observed position
+                The predicitded position
+    """
+    final = []
+    for i in range(len(obs)):
+        final.append((obs[i], upd[i]))
+    return(final)
+
+def tuple2list(final):
+    """
+    :param final: The final data set of each measurement
     :return:
     """
-    print(data_tot)
-    i = 0 #outer loop counter
-    j = 0 #inner loop counter resets after each tag position
-    for pos in data_tot:##The outer loop that goes through every position where the tag was placed
-        print('')
-        i+=1
-        j = 0
-        for meas in pos:##The inner loop, every measurement in the postion
-            if (j == 0):##This should be the 2D theoretical coordinate
-                pass
-            else:##The various measurements at each interval
-                ## Try to split the updates state to two seperate measurments
-                print(meas)
-            j+=1
+    oc = 0
+    final_list = []
+    temp = []
+    for pos in final:##outer loop position of tag
+        ic = 0 ## resets the inner count variable to 0; used to elimnate theoretical measurements
+        for meas in pos:##inner loop
+            if ic  == 0:
+                temp.append(meas)
+            if ic > 0:
+                measlist = list(meas)
+                temp.append(measlist)
+            ic+=1
+        final_list.append(temp)
+        temp = []
+        oc+=1
+    return(final_list)
 
-def parse_KNLOS(measure):
-    """
-    :param measure:
-    :return:
-    """
-    obs = measure[0]
-
-    return(obs)
 
 
 if __name__ == '__main__':
@@ -555,11 +586,32 @@ if __name__ == '__main__':
     #hist_LOS(data_LOS)
     #range_errorLOS(data_LOS)
     #cdf_dataLOS(data_LOS)
-    data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as List of tuples w/theoretical first
+    #data_NLOS = parsedataNLOS()##Function to return the NLOS data coordinates as List of tuples w/theoretical first
     #mean_errorNLOS(data_NLOS)##Mean error of NLOS data
-    hist_NLOS(data_NLOS)##histogram of NLOS data
+    #hist_NLOS(data_NLOS)##histogram of NLOS data
     #range_errorNLOS(data_NLOS)##range error of NLOS data
     #cdfNLOS_data(data_NLOS)
-    #data_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
-    #parse_KNLOS(data_KNLOS)
-    #KLEANNLOS(data_KNLOS)
+    data_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
+    listdata = tuple2list(data_KNLOS)
+    finaldata = []
+    tempdata = []
+    for pos in listdata:
+        ic = 0
+        for meas in pos:
+            ic+=1
+            if ic  == 1:
+                tempdata.append(meas)
+            elif ic > 1:
+                if '\n' in meas[1]:
+                    for place,item in enumerate(meas[1]):
+                        if item == '\n':
+                            tp = place
+                    meas[1] = meas[1][:tp]
+                tempdata.append(meas)
+        finaldata.append(tempdata)
+        tempdata = []
+    print(finaldata)
+
+
+
+
