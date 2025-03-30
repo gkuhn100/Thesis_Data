@@ -402,7 +402,7 @@ def hist_NLOS(NLOS_data):
     plt.ylabel('Frequency')
     plt.title("Frequency of Errors in (m) in NLOS scenario")
     plt.show()
-    plt.ylabel()
+
 
 def range_errorNLOS(NLOS_data):
     """
@@ -618,36 +618,63 @@ def finalKNLOSdata(listdata):
 
 def mean_errorKNLOS(KNLOS_data):
     """
-
+    This function takes as input the nested list KNLOS_data and creates 3 columns in an excel notebook;
+    theoertical, observed, and updated. Each represent the Decawave.
     :param KNLOS_data: A P*M list of list with each item containing either the theoretical pos or the
             obs and updated position as a 2D state
-    :return: N/A Will write ot an excel fil
+    :return: N/A ~ Will write to an excel file
     """
+    data_real =  [] ## a list of tuples of real tag measurements in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measurements in 2D
+    diff_list_obs = [] ## A list containing the differences between theoretical and real measurements
+    diff_list_upd = []
+    obs_pos_list = []
+    upd_state_list = []
+    theor_list = [] ## The list of the theoretical position of the tag node; X then Y
+    final_obs_list = []## The list of the observed position of the tag node; X then Y
+    final_upd_state_list = [] ##The list of the updated position of the tag node; X then Y
 
-    ctr = 0
-    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
-    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
-    data_final = [] ## a list of tuples of
-    theor_list = [] ## list of floats
-    real_list = []  ## list of floats
-    for tag_pos in KNLOS_data:##The total number of postions the tag is place at each one
+    ## Go through the KNLOS data and create two lists, one of theoretical and one of real
+    for tag_pos in KNLOS_data:##The total number of positions the tag is place at each one
         for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
-            print(tag_pos[meas])
-            data_real.append((tag_pos[meas]))
-            data_theor.append(tag_pos[0])
-    for tuple in data_theor:
-        X_real,Y_real = data_real[ctr]
-        X_theor,Y_theor = data_theor[ctr]
-        X_coord = (X_real,X_theor)
-        Y_coord = (Y_real,Y_theor)
-        data_final.append(X_coord)
-        data_final.append(Y_coord)
-        ctr+=1
-    for tuple in data_final:
-        real,theor = tuple
-        theor_list.append(theor)
-        real_list.append(real)
-    df = pd.DataFrame({'Theoretical Measurements': theor_list, 'Experimental Measurements': real_list})
+            data_real.append(tag_pos[meas])## Real Data
+            data_theor.append(tag_pos[0])## Theoretical Data
+
+    ##Create the list of observed data as a two-dimensional list, this is parsing portion for observed position
+    for item in range(len(data_real)):
+        data_obs = data_real[item][0]
+        data_obs_str = data_obs.replace("[", "")
+        data_obs_str = data_obs_str.replace(']', '')
+        data_no_c = data_obs_str.replace(',', '')
+        data_obs_list = data_no_c.split()
+        obs_pos_list.append(data_obs_list)
+
+    ##Create the list of Updated state data as a two-dimensional list, this is parsing portion for Updated State
+    for item in range(len(data_real)):
+        data_upd = data_real[item][1]
+        data_upd_str = data_upd.replace("[", "")
+        data_upd_str = data_upd_str.replace(']', '')
+        data_no_c = data_upd_str.replace(',', '')
+        data_upd_list = data_no_c.split()
+        upd_state_list.append(data_upd_list)
+
+    ## Unpack the X and Y coordinates from the list, both theor and observed
+    for place, item in enumerate(obs_pos_list):
+        X_obs,Y_obs =  obs_pos_list[place]
+        X_theor,Y_theor = data_theor[place]
+        theor_list.append(X_theor)
+        theor_list.append(Y_theor)
+        final_obs_list.append(float(X_obs))
+        final_obs_list.append(float(Y_obs))
+
+    ## Unpack X and coordinates from update_state_list
+    for place, item in enumerate(upd_state_list):
+        X_upd_S,Y_upd_S =  upd_state_list[place]
+        final_upd_state_list.append(float(X_upd_S))
+        final_upd_state_list.append(float(Y_upd_S))
+
+    ## Create the Dataframe and make the excel datasheet
+    df = pd.DataFrame({'Theoretical Measurements': theor_list, 'Observed Measurements': final_obs_list, 'Updated State': final_upd_state_list})
     df.to_excel('Mean_Erorr_KNLOS.xlsx', sheet_name='sheet1', index=False)
 
 def hist_KNLOS(KNLOS_data):
@@ -658,52 +685,69 @@ def hist_KNLOS(KNLOS_data):
             obs and updated position as a 2D state
     :return: N/A
     """
+    data_real =  [] ## a list of tuples of real tag measurements in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measurements in 2D
+    diff_list_obs = [] ## A list containing the differences between theoretical and real measurements
+    diff_list_upd = []
+    obs_pos_list = []
+    upd_state_list = []
+    theor_list = [] ## The list of the theoretical position of the tag node; X then Y
+    final_obs_list = []## The list of the observed position of the tag node; X then Y
+    final_upd_state_list = [] ##The list of the updated position of the tag node; X then Y
 
-    ctr = 0
-    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
-    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
-    obs_list = []  ## list of floats
-    theor_list = [] ## list of floats
-    finallist = []
-    diff_list = [] ## A list containing the differences between theoretical and real measurements
-    Obs_Pos_list = []
-    UPd_State_list = []
-
-    ## Go through the KNLOS data and create two lists, one of theoretical and one of real data
+    ## Go through the KNLOS data and create two lists, one of theoretical and one of Real
     for tag_pos in KNLOS_data:##The total number of postions the tag is place at each one
         for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
-            data_real.append((tag_pos[meas]))
+            data_real.append(tag_pos[meas])## Real Data
             data_theor.append(tag_pos[0])## Theoretical Data
 
-    ##Create the lsit of observed data as a two-dimensional list
+    ##Create the list of observed data as a two-dimensional list this is parsing portion for observed
+    for item in range(len(data_real)):
+        data_obs = data_real[item][0]
+        data_obs_str = data_obs.replace("[", "")
+        data_obs_str = data_obs_str.replace(']', '')
+        data_no_c = data_obs_str.replace(',', '')
+        data_obs_list = data_no_c.split()
+        obs_pos_list.append(data_obs_list)
+
+    ##Create the list of Updated state data as a two-dimensional list this is parsing portion for Updated State
     for item in range(len(data_real)):
         data_upd = data_real[item][1]
         data_upd_str = data_upd.replace("[", "")
         data_upd_str = data_upd_str.replace(']', '')
         data_no_c = data_upd_str.replace(',', '')
-        data_obs_list = data_no_c.split()
-        obs_list.append(data_obs_list)
+        data_upd_list = data_no_c.split()
+        upd_state_list.append(data_upd_list)
 
     ## Unpack the X and Y coordinates from the list, both theor and observed
-    for place, item in enumerate(obs_list):
-        X_obs,Y_obs =  obs_list[place]
+    for place, item in enumerate(obs_pos_list):
+        X_obs,Y_obs =  obs_pos_list[place]
         X_theor,Y_theor = data_theor[place]
         theor_list.append(X_theor)
         theor_list.append(Y_theor)
-        finallist.append(float(X_obs))
-        finallist.append(float(Y_obs))
+        final_obs_list.append(float(X_obs))
+        final_obs_list.append(float(Y_obs))
 
-    ## Create differences between the two
+## Unpack X and coordinates from update_state_list
+    for place, item in enumerate(upd_state_list):
+        X_upd_S,Y_upd_S =  upd_state_list[place]
+        final_upd_state_list.append(float(X_upd_S))
+        final_upd_state_list.append(float(Y_upd_S))
+
+    ## Create differences between the observed versus theor
     for i in range(len(theor_list)):
-        diff_list.append(finallist[i] - theor_list[i])
+        diff_list_obs.append(final_obs_list[i] - theor_list[i])
+
+    ## Create differences between the updated versus theor
+    for i in range(len(theor_list)):
+        diff_list_upd.append(final_obs_list[i] - theor_list[i])
 
     ## Histogram Stuff
-    plt.hist(diff_list,bins=20, color = 'blue', edgecolor = 'black')
+    plt.hist(diff_list_upd,bins=20, color = 'blue', edgecolor = 'black')
     plt.xlabel('Error (m)')
     plt.ylabel('Frequency')
-    plt.title("Frequency of Errors in (m) in NLOS scenario")
+    plt.title("Frequency of Errors(m) of Updated State of Decawave in NLOS scenario")
     plt.show()
-    plt.ylabel()
 
 def range_errorKNLOS(KNLOS_data):
     """
@@ -711,120 +755,182 @@ def range_errorKNLOS(KNLOS_data):
     :param NLOS_data: a p*m list of tuples, with  each measurement being a 2D coordinate; and first item always being theoretical
     :return: N/A
     """
-    ctr = 0
-    i = 0
-    data_real =  [] ## a list of tuples of real tag measuremnets in 2D
-    data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
-    data_final = [] ## a list of tuples of
-    theor_list = [] ## list of floats
-    real_list = []  ## list of floats
-    diff_list = [] ## list of difference between the two
-    short_error = []##list of errors from 0-3m
-    med_error = []##list of errors from 3.5-5.0.
-    long_error = []## list of errors from 5.5 - 7.5m
+    data_real =  [] ## a list of tuples of real tag measurements in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measurements in 2D
+    diff_list_obs = [] ## A list containing the differences between theoretical and real measurements
+    diff_list_upd = []
+    obs_pos_list = []
+    upd_state_list = []
+    theor_list = [] ## The list of the theoretical position of the tag node; X then Y
+    final_obs_list = []## The list of the observed position of the tag node; X then Y
+    final_upd_state_list = [] ##The list of the updated position of the tag node; X then Y
+
+    short_error = []## Error of Position of Decawave when placed at GT posititon from 0-3m
+    med_error = []## Error of Position of Decawave when placed at GT posititon from 3.5-6m
+    long_error = []## Error of Position of Decawave when placed at GT position greater than 6m
+
+
+    ## Go through the KNLOS data and create two lists, one of theoretical and one of Real
     for tag_pos in KNLOS_data:##The total number of postions the tag is place at each one
         for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
-            data_real.append((tag_pos[meas]))
-            data_theor.append(tag_pos[0])
-    for tuple in data_theor:
-        X_real,Y_real = data_real[ctr]
-        X_theor,Y_theor = data_theor[ctr]
-        X_coord = (X_real,X_theor)
-        Y_coord = (Y_real,Y_theor)
-        data_final.append(X_coord)
-        data_final.append(Y_coord)
-        ctr+=1
-    for tuple in data_final:
-        real,theor = tuple
-        theor_list.append(theor)
-        real_list.append(real)
-    for i in range(len(real_list)):
-        diff_list.append(real_list[i] - theor_list[i])
-    print(diff_list)
-    x_theor = theor_list[0::2]
-    y_theor = theor_list[1::2]
-    x_exp   = real_list[0::2]
-    y_exp   = real_list[1::2]
-    diff_x = []
-    diff_y = []
-    ## Getting the differences between theoretical and experimental values
+            data_real.append(tag_pos[meas])## Real Data
+            data_theor.append(tag_pos[0])## Theoretical Data
+
+    ##Create the list of observed data as a two-dimensional list this is parsing portion for observed
+    for item in range(len(data_real)):
+        data_obs = data_real[item][0]
+        data_obs_str = data_obs.replace("[", "")
+        data_obs_str = data_obs_str.replace(']', '')
+        data_no_c = data_obs_str.replace(',', '')
+        data_obs_list = data_no_c.split()
+        obs_pos_list.append(data_obs_list)
+
+    ##Create the list of Updated state data as a two-dimensional list this is parsing portion for Updated State
+    for item in range(len(data_real)):
+        data_upd = data_real[item][1]
+        data_upd_str = data_upd.replace("[", "")
+        data_upd_str = data_upd_str.replace(']', '')
+        data_no_c = data_upd_str.replace(',', '')
+        data_upd_list = data_no_c.split()
+        upd_state_list.append(data_upd_list)
+
+    ## Unpack the X and Y coordinates from the list, both theor and observed
+    for place, item in enumerate(obs_pos_list):
+        X_obs,Y_obs =  obs_pos_list[place]
+        X_theor,Y_theor = data_theor[place]
+        theor_list.append(X_theor)
+        theor_list.append(Y_theor)
+        final_obs_list.append(float(X_obs))
+        final_obs_list.append(float(Y_obs))
+
+    ## Unpack X and coordinates from update_state_list
+    for place, item in enumerate(upd_state_list):
+        X_upd_S,Y_upd_S =  upd_state_list[place]
+        final_upd_state_list.append(float(X_upd_S))
+        final_upd_state_list.append(float(Y_upd_S))
+
+    ## Create differences between the observed versus theor
+    for i in range(len(theor_list)):
+        diff_list_obs.append(final_obs_list[i] - theor_list[i])
+
+    ## Create differences between the updated versus theor
+    for i in range(len(theor_list)):
+        diff_list_upd.append(final_obs_list[i] - theor_list[i])
+
+    x_theor =  theor_list[0::2]
+    y_theor =  theor_list[1::2]
+    x_obs   =  final_obs_list[0::2]
+    y_obs   =  final_obs_list[1::2]
+    x_up    =  final_upd_state_list[0::2]
+    y_up    =  final_upd_state_list[1::2]
+
+    diff_X_obs = []
+    diff_Y_obs = []
+    diff_X_upd = []
+    diff_X_obs = []
+
     for i in range(len(x_theor)):
-        diff_y.append(y_theor[i] - y_exp[i])
-        diff_x.append(x_theor[i] - x_exp[i])
-    short_error.append(diff_x[0:258])
-    med_error.append(diff_x[258::])
-    short_error.append(diff_y[0:84])
-    short_error.append(diff_y[171:200])
-    short_error.append(diff_y[258:345])##1.5
-    short_error.append(diff_y[345:374])##2.5
-    med_error.append(diff_y[374:403])##3.5
-    med_error.append(diff_y[403:432])##4.5
-    long_error.append(diff_y[432:461])##4.5
-    long_error.append(diff_y[200:229])##6.0
-    long_error.append(diff_y[84:113])#6.5
-    long_error.append(diff_y[461:490])#6.5
-    long_error.append(diff_y[200:229])#7.0
-    long_error.append(diff_y[229:258])#7.0
-    long_error.append(diff_y[490])#7.5
+        diff_X_obs.append(x_theor[i] - x_obs[i])
+        diff_Y_obs.append(y_theor[i] - y_obs[i])
+        diff_X_upd.append(x_theor[i] - x_up[i])
+        diff_X_obs.append(y_theor[i] - y_up[i])
 
-    error_short = short_error[0] + short_error[1] + short_error[2] + short_error[3] + short_error[4]
-    error_med = med_error[0] + med_error[1] + med_error[2]
-    error_lon = long_error[0] + long_error[1] + long_error[2] + long_error[3] + long_error[4] + long_error[5]
-    error_lon.append(long_error[6])
+    for place, item in enumerate(x_theor):
+        print(place, '', item)
 
-    std_short = statistics.stdev(error_short)
-    std_med   = statistics.stdev(error_med)
-    std_lon   = statistics.stdev(error_lon)
+    #for place, item in enumerate(y_theor):
+     #   print(place, '', item)
 
-    ranges = ['0-3', '3.5 - 5.0', '5.5 - 7.5']
-    stds = [std_short, std_med, std_lon]
-    plt.bar(ranges,stds, color = 'green')
-    plt.xlabel("Range Intervals (m) ")
-    plt.ylabel('Standard Deviation Errors(M)')
-    plt.title("Standard deviation of Decawave Positioning errors in NLOS")
-    plt.show()
+
+    #short_error_obs.append()
+    #med_error_obs.append()
+    #long_error_obs.append()
+    #std_short_obs = statistics.stdev(error_short)
+    #std_med_obs   = statistics.stdev(error_med)
+    #std_lon_obs   = statistics.stdev(error_lon)
+
+    #ranges = ['0-3', '3.5 - 5.0', '5.5 - 8.0']
+    #stds_obs = [std_short_obs, std_med_obs, std_lon_obs]
+    #std_upd = [std_short_upd, std_med_upd, std_lon_upd]
+    #plt.bar(ranges,stds, color = 'green')
+    #plt.xlabel("Range Intervals (m) ")
+    #plt.ylabel('Standard Deviation (M)')
+    #plt.title("Standard deviation of Decawave Positioning errors in NLOS")
+    #plt.show()
 
 def cdfKNLOS_data(KNLOS_data):
     """
     :param KNLOS_data:
     :return:
     """
-    ctr = 0
     data_real =  [] ## a list of tuples of real tag measuremnets in 2D
     data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
-    data_final = [] ## a list of tuples of
     theor_list = [] ## list of floats
-    real_list = []  ## list of floats
-    diff_list = [] ## A list containing the differences between theoretical and real measurements
+    final_obs_list = []
+    final_upd_state_list = []
+    diff_list_obs = [] ## A list containing the differences between theoretical and real measurements
+    diff_list_upd = []
+    obs_pos_list = []
+    upd_state_list = []
 
+    ## Go through the KNLOS data and create two lists, one of theoretical and one of Real
     for tag_pos in KNLOS_data:##The total number of postions the tag is place at each one
         for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
-            data_real.append((tag_pos[meas]))
-            data_theor.append(tag_pos[0])
-    for tuple in data_theor:
-        X_real,Y_real = data_real[ctr]
-        X_theor,Y_theor = data_theor[ctr]
-        X_coord = (X_real,X_theor)
-        Y_coord = (Y_real,Y_theor)
-        data_final.append(X_coord)
-        data_final.append(Y_coord)
-        ctr+=1
-    for tuple in data_final:
-        real,theor = tuple
-        theor_list.append(theor)
-        real_list.append(real)
+            data_real.append(tag_pos[meas])## Real Data
+            data_theor.append(tag_pos[0])## Theoretical Data
+
+    ##Create the list of observed data as a two-dimensional list this is parsing portion for observed
+    for item in range(len(data_real)):
+        data_obs = data_real[item][0]
+        data_obs_str = data_obs.replace("[", "")
+        data_obs_str = data_obs_str.replace(']', '')
+        data_no_c = data_obs_str.replace(',', '')
+        data_obs_list = data_no_c.split()
+        obs_pos_list.append(data_obs_list)
+
+    ##Create the list of Updated state data as a two-dimensional list this is parsing portion for Updated State
+    for item in range(len(data_real)):
+        data_upd = data_real[item][1]
+        data_upd_str = data_upd.replace("[", "")
+        data_upd_str = data_upd_str.replace(']', '')
+        data_no_c = data_upd_str.replace(',', '')
+        data_upd_list = data_no_c.split()
+        upd_state_list.append(data_upd_list)
+
+    ## Unpack the X and Y coordinates from the list, both theor and observed
+    for place, item in enumerate(obs_pos_list):
+        X_obs,Y_obs =  obs_pos_list[place]
+        X_theor,Y_theor = data_theor[place]
+        theor_list.append(X_theor)
+        theor_list.append(Y_theor)
+        final_obs_list.append(float(X_obs))
+        final_obs_list.append(float(Y_obs))
+
+    ## Unpack X and coordinates from update_state_list
+    for place, item in enumerate(upd_state_list):
+        X_upd_S,Y_upd_S =  upd_state_list[place]
+        final_upd_state_list.append(float(X_upd_S))
+        final_upd_state_list.append(float(Y_upd_S))
+
+    ## Create differences between the observed versus theor
     for i in range(len(theor_list)):
-        diff_list.append(real_list[i] - theor_list[i])
-    cleanedList = [x for x in diff_list if str(x) != 'nan']
+        diff_list_obs.append(final_obs_list[i] - theor_list[i])
+
+    ## Create differences between the updated versus theor
+    for i in range(len(theor_list)):
+        diff_list_upd.append(final_obs_list[i] - theor_list[i])
+
+    cleanedList = [x for x in diff_list_upd if str(x) != 'nan']
     count, bins_count = np.histogram(cleanedList, bins=10)
     pdf = count / sum(count)
     cdf = np.cumsum(pdf)
     plt.plot(bins_count[1:], cdf, label="CDF")
-    plt.title('Cumulative Density Function(CDF) of Positioning error in NLOS')
+    plt.title('Cumulative Density Function(CDF) of Positioning error in NLOS Upd')
     plt.xlabel('Localization Error(m)')
     plt.ylabel('Probability')
     plt.legend()
     plt.show()
+
 
 if __name__ == '__main__':
     #theor_los,exp_los = getdataLOS() ## Function returns theoretical and experiment Y_coordinates as a list
@@ -842,6 +948,9 @@ if __name__ == '__main__':
     listdata = tuple2list(data_KNLOS)
     finalKNLOS = finalKNLOSdata(listdata)
     #mean_errorKNLOS(finalKNLOS)
-    hist_KNLOS(finalKNLOS)
-    #range_errorKNLOS(finalKNLOS)
+    #hist_KNLOS(finalKNLOS)
+    range_errorKNLOS(finalKNLOS)
     #cdfKNLOS_data(finalKNLOS)
+
+
+
