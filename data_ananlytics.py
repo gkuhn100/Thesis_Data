@@ -403,7 +403,6 @@ def hist_NLOS(NLOS_data):
     plt.title("Frequency of Errors in (m) in NLOS scenario")
     plt.show()
 
-
 def range_errorNLOS(NLOS_data):
     """
     The objective of this function is to display the standard deviation of errors across different ranges; short,middle,long
@@ -738,9 +737,9 @@ def hist_KNLOS(KNLOS_data):
     for i in range(len(theor_list)):
         diff_list_obs.append(final_obs_list[i] - theor_list[i])
 
-    ## Create differences between the updated versus theor
+    ## Create differences between the observed versus theor
     for i in range(len(theor_list)):
-        diff_list_upd.append(final_obs_list[i] - theor_list[i])
+        diff_list_upd.append(final_upd_state_list[i] - theor_list[i])
 
     ## Histogram Stuff
     plt.hist(diff_list_upd,bins=20, color = 'blue', edgecolor = 'black')
@@ -758,16 +757,20 @@ def range_errorKNLOS(KNLOS_data):
     data_real =  [] ## a list of tuples of real tag measurements in 2D
     data_theor = [] ## a list of tuples of theoretical tag measurements in 2D
     diff_list_obs = [] ## A list containing the differences between theoretical and real measurements
-    diff_list_upd = []
-    obs_pos_list = []
-    upd_state_list = []
+    diff_list_upd = []## A list containing the differences between the updated state and theoretical
+    obs_pos_list = []##
+    upd_state_list = []##
     theor_list = [] ## The list of the theoretical position of the tag node; X then Y
     final_obs_list = []## The list of the observed position of the tag node; X then Y
     final_upd_state_list = [] ##The list of the updated position of the tag node; X then Y
 
-    short_error = []## Error of Position of Decawave when placed at GT posititon from 0-3m
-    med_error = []## Error of Position of Decawave when placed at GT posititon from 3.5-6m
-    long_error = []## Error of Position of Decawave when placed at GT position greater than 6m
+    short_error_obs = []## Error of Observed Position of Decawave when placed at GT posititon from 0-3m
+    med_error_obs = []## Error of Observed Position of Decawave when placed at GT posititon from 3.5-5.5m
+    long_error_obs = []## Error of Observed Position of Decawave when placed at GT position greater than 5.5m
+
+    short_error_up = []## Error of Updated State of Decawave when placed at GT posititon from 0-3m
+    med_error_up = []## Error of Updated State of Decawave when placed at GT posititon from 3.5-6m
+    long_error_up = []## Error of Updated State of Decawave when placed at GT position greater than 5.5m
 
 
     ## Go through the KNLOS data and create two lists, one of theoretical and one of Real
@@ -794,7 +797,7 @@ def range_errorKNLOS(KNLOS_data):
         data_upd_list = data_no_c.split()
         upd_state_list.append(data_upd_list)
 
-    ## Unpack the X and Y coordinates from the list, both theor and observed
+    ## Unpack the X and Y coordinates from the list, both theor and observed (it will be X then Y Coordiante)
     for place, item in enumerate(obs_pos_list):
         X_obs,Y_obs =  obs_pos_list[place]
         X_theor,Y_theor = data_theor[place]
@@ -803,75 +806,122 @@ def range_errorKNLOS(KNLOS_data):
         final_obs_list.append(float(X_obs))
         final_obs_list.append(float(Y_obs))
 
-    ## Unpack X and coordinates from update_state_list
+    ## Unpack X and coordinates from update_state_list (it will be X then Y Coordiante)
     for place, item in enumerate(upd_state_list):
         X_upd_S,Y_upd_S =  upd_state_list[place]
         final_upd_state_list.append(float(X_upd_S))
         final_upd_state_list.append(float(Y_upd_S))
 
-    ## Create differences between the observed versus theor
+    ## Create differences between the observed position versus theor
     for i in range(len(theor_list)):
         diff_list_obs.append(final_obs_list[i] - theor_list[i])
 
-    ## Create differences between the updated versus theor
+    ## Create differences between the updated state versus theor
     for i in range(len(theor_list)):
         diff_list_upd.append(final_obs_list[i] - theor_list[i])
 
-    x_theor =  theor_list[0::2]
-    y_theor =  theor_list[1::2]
-    x_obs   =  final_obs_list[0::2]
-    y_obs   =  final_obs_list[1::2]
-    x_up    =  final_upd_state_list[0::2]
-    y_up    =  final_upd_state_list[1::2]
 
-    diff_X_obs = []
-    diff_Y_obs = []
-    diff_X_upd = []
-    diff_X_obs = []
+    x_theor =  theor_list[0::2]##Theoertical X Coordinates
+    y_theor =  theor_list[1::2]##Theoretical Y Coordinates
+    x_obs   =  final_obs_list[0::2]##Observed X coordinates
+    y_obs   =  final_obs_list[1::2]##Observed Y coordinates
+    x_up    =  final_upd_state_list[0::2]##Updated X Coordinates
+    y_up    =  final_upd_state_list[1::2]##Updated Y Coordinates
 
+    diff_X_obs = []##The list of differences between the X coordiantes observed and theoretical Values
+    diff_Y_obs = []##The list of differences between the Y coordiantes observed and theoretical Values
+    diff_X_upd = []##The list of differences between the X coordiantes updated and theoretical Values
+    diff_Y_upd = []##The list of differences between the Y coordiantes updated and theoretical Values
+
+##At long last the differences between the two measurements
     for i in range(len(x_theor)):
-        diff_X_obs.append(x_theor[i] - x_obs[i])
-        diff_Y_obs.append(y_theor[i] - y_obs[i])
-        diff_X_upd.append(x_theor[i] - x_up[i])
-        diff_X_obs.append(y_theor[i] - y_up[i])
+        diff_X_obs.append(x_obs[i] - x_theor[i])
+        diff_Y_obs.append(y_obs[i] - y_theor[i])
+        diff_X_upd.append(x_up[i] - x_theor[i])
+        diff_X_obs.append(y_up[i] - y_theor[i])
 
-    for place, item in enumerate(x_theor):
-        print(place, '', item)
+    #for place, item in enumerate(x_theor):
+    #    print(place, '', item)
 
     #for place, item in enumerate(y_theor):
      #   print(place, '', item)
 
 
-    #short_error_obs.append()
-    #med_error_obs.append()
-    #long_error_obs.append()
-    #std_short_obs = statistics.stdev(error_short)
-    #std_med_obs   = statistics.stdev(error_med)
-    #std_lon_obs   = statistics.stdev(error_lon)
+##Get the Observed Errors based on the theoeretical distances; will include both X and Y
+    short_error_obs.append(diff_X_upd[0:598])
+    med_error_obs.append(diff_X_upd[598:676])
+    long_error_obs.append(diff_X_upd[676::])
 
-    #ranges = ['0-3', '3.5 - 5.0', '5.5 - 8.0']
-    #stds_obs = [std_short_obs, std_med_obs, std_lon_obs]
-    #std_upd = [std_short_upd, std_med_upd, std_lon_upd]
-    #plt.bar(ranges,stds, color = 'green')
-    #plt.xlabel("Range Intervals (m) ")
-    #plt.ylabel('Standard Deviation (M)')
-    #plt.title("Standard deviation of Decawave Positioning errors in NLOS")
-    #plt.show()
+    short_error_obs.append(diff_Y_obs[0:39])
+    short_error_obs.append(diff_Y_obs[136:175])
+    short_error_obs.append(diff_Y_obs[243:355])
+    short_error_obs.append(diff_Y_obs[559:715])
+
+    med_error_obs.append(diff_Y_obs[355:457])
+    med_error_obs.append(diff_Y_obs[715:793])
+
+    long_error_obs.append(diff_Y_obs[39:136])
+    long_error_obs.append(diff_Y_obs[175:243])
+    long_error_obs.append(diff_Y_obs[457:550])
+    long_error_obs.append(diff_Y_obs[793::])
+
+    ##Get the Updated State Errors based on the theoeretical distances; will include both X and Y
+    short_error_up.append(diff_Y_upd[0:39])
+    short_error_up.append(diff_Y_upd[136:175])
+    short_error_up.append(diff_Y_upd[243:355])
+    short_error_up.append(diff_Y_upd[559:715])
+
+    med_error_up.append(diff_Y_upd[355:457])
+    med_error_up.append(diff_Y_upd[715:793])
+
+    long_error_up.append(diff_Y_upd[39:136])
+    long_error_up.append(diff_Y_upd[175:243])
+    long_error_up.append(diff_Y_upd[457:550])
+    long_error_up.append(diff_Y_upd[793::])
+
+    ##There is a formatting problem for the STD function; wont take a list as an argument, this removes it
+    error_obs_short = short_error_obs[0] + short_error_obs[1] + short_error_obs[2] + short_error_obs[3] + short_error_obs[4]
+    error_obs_med = med_error_obs[0] + med_error_obs[1] + med_error_obs[2]
+    error_obs_long = long_error_obs[0] + long_error_obs[1] + long_error_obs[2] + long_error_obs[3] + long_error_obs[4]
+
+    error_up_short = short_error_obs[0] + short_error_obs[1] + short_error_obs[2] + short_error_obs[3] + short_error_obs[4]
+    error_up_med = med_error_obs[0] + med_error_obs[1] + med_error_obs[2]
+    error_up_long = long_error_obs[0] + long_error_obs[1] + long_error_obs[2] + long_error_obs[3] + long_error_obs[4]
+
+##Calculate Standard Deviation
+    std_short_obs = statistics.stdev(error_obs_short)
+    std_med_obs   = statistics.stdev(error_obs_med)
+    std_lon_obs   = statistics.stdev(error_obs_long)
+
+    std_short_up = statistics.stdev(error_up_short)
+    std_med_up   = statistics.stdev(error_up_med)
+    std_lon_up   = statistics.stdev(error_up_long)
+
+## Bar Graph Plotting time
+    ranges = ['0-3', '3.5 - 5.0', '5.5 - 8.5']
+    stds_obs = [std_short_obs, std_med_obs, std_lon_obs]
+    std_upd = [std_short_up, std_med_up, std_lon_up]
+    plt.bar(ranges,std_upd, color = 'green')
+    plt.xlabel("Range Intervals (m) ")
+    plt.ylabel('Standard Deviation (M)')
+    plt.title("Standard deviation of Updated Decawave Positioning errors in NLOS")
+    plt.show()
 
 def cdfKNLOS_data(KNLOS_data):
     """
-    :param KNLOS_data:
-    :return:
+    This function displays the Culmative Distribution of both the obsrved and updated state errors in a NLOS environment
+    :param KNLOS_data:a p*m list of tuples, with  each measurement being a 2D coordinate; and first item always being theoretical
+    :return:N/A Kinda a graph of the CDF
     """
     data_real =  [] ## a list of tuples of real tag measuremnets in 2D
     data_theor = [] ## a list of tuples of theoretical tag measuremnets in 2D
-    theor_list = [] ## list of floats
-    final_obs_list = []
-    final_upd_state_list = []
+    theor_list = [] ## list of floats of the theoretical values
+    obs_pos_list = []## A parsed list of the obsered position
+    upd_state_list = []## A parsed list of the updated state
+    final_obs_list = []## The final unpacked and parsed list of all values of observed values
+    final_upd_state_list = []##The final unpacked and parsed list of all values of updated state
     diff_list_obs = [] ## A list containing the differences between theoretical and real measurements
-    diff_list_upd = []
-    obs_pos_list = []
-    upd_state_list = []
+    diff_list_upd = []##A list containing the differences between theoretical and real measurements
 
     ## Go through the KNLOS data and create two lists, one of theoretical and one of Real
     for tag_pos in KNLOS_data:##The total number of postions the tag is place at each one
@@ -925,7 +975,7 @@ def cdfKNLOS_data(KNLOS_data):
     pdf = count / sum(count)
     cdf = np.cumsum(pdf)
     plt.plot(bins_count[1:], cdf, label="CDF")
-    plt.title('Cumulative Density Function(CDF) of Positioning error in NLOS Upd')
+    plt.title('Cumulative Density Function(CDF) of Positioning error in KNLOS Upd')
     plt.xlabel('Localization Error(m)')
     plt.ylabel('Probability')
     plt.legend()
@@ -933,7 +983,7 @@ def cdfKNLOS_data(KNLOS_data):
 
 
 if __name__ == '__main__':
-    #theor_los,exp_los = getdataLOS() ## Function returns theoretical and experiment Y_coordinates as a list
+    theor_los,exp_los = getdataLOS() ## Function returns theoretical and experiment Y_coordinates as a list
     #data_LOS = parsedataLOS()##Function to return the LOS data's coordinates as tuple w/ theor_first
     #rangerror_LOS(data_LOS)
     #hist_LOS(data_LOS)
@@ -944,12 +994,12 @@ if __name__ == '__main__':
     #hist_NLOS(data_NLOS)##histogram of NLOS data
     #range_errorNLOS(data_NLOS)##range error of NLOS data
     #cdfNLOS_data(data_NLOS)
-    data_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
-    listdata = tuple2list(data_KNLOS)
-    finalKNLOS = finalKNLOSdata(listdata)
+    #ata_KNLOS = parsedataKNLOS()##Function to return the KNLOS data; then tuples of obs vs predicted_pos in 2d first tuple is theoretical
+    #listdata = tuple2list(data_KNLOS)
+    #finalKNLOS = finalKNLOSdata(listdata)
     #mean_errorKNLOS(finalKNLOS)
     #hist_KNLOS(finalKNLOS)
-    range_errorKNLOS(finalKNLOS)
+    #range_errorKNLOS(finalKNLOS)
     #cdfKNLOS_data(finalKNLOS)
 
 
