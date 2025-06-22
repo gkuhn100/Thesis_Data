@@ -332,20 +332,21 @@ def parsedataKNLOS():
     data_tot = []
 
     for file in os.listdir(r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test3NLOS\BS_Data'):
-        ffp = file_locKFNLOS + '/' + file
-        file = file.rstrip('.csv')
-        file = file.replace('dot','.')
-        pars_exp = file.split('X')
-        X = float(pars_exp[0])
-        Y = pars_exp[1].rstrip('Y')
-        Y = float(Y)
-        theor_coord.append((X,Y))## The theoretical
-        df = pd.read_csv(ffp, header = 0)
-        obs_pos = df.loc[:,'Obs_Position'].tolist()
-        up_state = df.loc[:,'Updated_State'].tolist()
-        KF = parse_KNLOS(obs_pos,up_state)
-        KF.insert(0,(X,Y))##Adds the theroritical X and Y coordinates
-        data_tot.append(KF)
+        if file.endswith('.csv'):
+            ffp = file_locKFNLOS + '/' + file
+            file = file.rstrip('.csv')
+            file = file.replace('dot','.')
+            pars_exp = file.split('X')
+            X = float(pars_exp[0])
+            Y = pars_exp[1].rstrip('Y')
+            Y = float(Y)
+            theor_coord.append((X,Y))## The theoretical
+            df = pd.read_csv(ffp, header = 0)
+            obs_pos = df.loc[:,'Obs_Position'].tolist()
+            up_state = df.loc[:,'Updated_State'].tolist()
+            KF = parse_KNLOS(obs_pos,up_state)
+            KF.insert(0,(X,Y))##Adds the theroritical X and Y coordinates
+            data_tot.append(KF)
     return data_tot
 
 def parse_KNLOS(obs,upd):
@@ -540,7 +541,7 @@ def hist_KNLOS(KNLOS_data):
     plt.hist(diff_list_obs,bins=20, color = 'blue', edgecolor = 'black')
     plt.xlabel('Error (m)')
     plt.ylabel('Frequency')
-    plt.title("Frequency of Errors(m) of Updated State of Decawave in NLOS scenario")
+    plt.title("Frequency of Errors(m) of Observed State of Decawave in NLOS scenario")
     plt.show()
     return()
 
@@ -619,11 +620,11 @@ def range_errorKNLOS(KNLOS_data):
 #Calculate The relevant statistical data
     meanNLOS_obs = statistics.mean(diff_list_obs)
     stdNLOS_obs= statistics.stdev(diff_list_obs)
-    meanNLOS_upd = statistics.mean(diff_list_upd)
-    stdNLOS_upd = statistics.stdev(diff_list_upd)
+    #meanNLOS_upd = statistics.mean(diff_list_upd)
+    #stdNLOS_upd = statistics.stdev(diff_list_upd)
 
     print("For Decawave in a NLOS setting the observed mean error is {0}, and standard deviation is {1}".format(meanNLOS_obs,stdNLOS_obs))
-    print("For Decawave in a NLOS setting the updated mean error is {0}, and standard deviation is {1}".format(meanNLOS_upd,stdNLOS_upd))
+    #print("For Decawave in a NLOS setting the updated mean error is {0}, and standard deviation is {1}".format(meanNLOS_upd,stdNLOS_upd))
 
     x_theor =  theor_list[0::2]##Theoertical X Coordinates
     y_theor =  theor_list[1::2]##Theoretical Y Coordinates
@@ -631,6 +632,8 @@ def range_errorKNLOS(KNLOS_data):
     y_obs   =  final_obs_list[1::2]##Observed Y coordinates
     x_up    =  final_upd_state_list[0::2]##Updated X Coordinates
     y_up    =  final_upd_state_list[1::2]##Updated Y Coordinates
+
+    print(y_theor[146:205])
 
     diff_X_obs = []##The list of differences between the X coordiantes observed and theoretical Values
     diff_Y_obs = []##The list of differences between the Y coordiantes observed and theoretical Values
@@ -719,7 +722,7 @@ def range_errorKNLOS(KNLOS_data):
     ax.set_ylabel('Standard Deviation of range error')
     ax.set_title('Ranges')
     ax.legend()
-    plt.show()
+    #plt.show()
 
 def cdfKNLOS_data(KNLOS_data):
     """
@@ -795,7 +798,7 @@ def cdfKNLOS_data(KNLOS_data):
     cdf_obs = np.cumsum(pdf_obs)
 
     plt.plot(bins_count_upd[1:], cdf_upd, label="CDF Upd")
-    plt.plot(bins_count_obs[1:], cdf_obs, label="CDF obs")
+    plt.plot(bins_count_obs[1:], cdf_obs, label="CDF Obs")
     plt.title('Cumulative Density Function(CDF) of Positioning error in KNLOS ')
     plt.xlabel('Localization Error(m)')
     plt.ylabel('Probability')
@@ -814,7 +817,7 @@ if __name__ == '__main__':
     finalKNLOS = finalKNLOSdata(listdata)
     #mean_errorKNLOS(finalKNLOS)
     #hist_KNLOS(finalKNLOS)
-    #range_errorKNLOS(finalKNLOS)
+    range_errorKNLOS(finalKNLOS)
     #cdfKNLOS_data(finalKNLOS)
 
 
