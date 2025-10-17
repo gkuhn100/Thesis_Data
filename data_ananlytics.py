@@ -9,6 +9,8 @@ import matplotlib.ticker as tck
 import numpy as np
 import seaborn as sns
 import os
+from numpy import *
+from matplotlib.pyplot import *
 
 #file_locLOS_listner = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\BS_data'
 file_locLOS = r'C:\Users\GregK\Desktop\Thesis_Data_analytics\Data_Analytics\Results\Test1LOS\BS_data'
@@ -248,7 +250,7 @@ def range_errorLOS(LOS_data):
     maxLOS = max(diff_y_list)
     stdLOS = statistics.stdev(diff_y_list)
 
-    #print("For Decawave in a LOS setting the mean error is {0}, and standard deviation is {1}".format(meanLOS,stdLOS))
+    print("For Decawave in a LOS setting the mean error is {0}, and standard deviation is {1}".format(meanLOS,stdLOS))
     print("For Decawave in a LOS setting the min error is {0}, and max is {1}".format(minLOS,maxLOS))
 
     error_3 = diff_y_list[:132]## A tuple of every range error from
@@ -320,12 +322,11 @@ def cdf_dataLOS(LOS_data):
     plt.legend()
     plt.show()
 
-
 def parsedataKNLOS():
     """
     This function Parses through every file in the KNLOS directory and returns P*M-dimensional list equivalent to number
      of files in directory with each dimension containing a list of tuples of the observed vs updated position
-      and theoretical as the first element in each P_list
+      and a theoretical(X,Y) tuple as the first element in each P_list
     :return: data_tot an N*R list of tuples with each tuple being either the theoretical pos, or obs vs updated_pos
     """
     theor_coord = []
@@ -475,7 +476,7 @@ def mean_errorKNLOS(KNLOS_data):
 def hist_KNLOS(KNLOS_data):
     """
     This function receieves as input the KNLOS_data and creates and displays two histograms, one of the observed
-    position erros and the other of the Updated State
+    position errors and the other of the Updated State
     :param KNLOS_data: A P*M list of list with each item containing either the theoretical pos or the
             obs and updated position as a 2D state
     :return: N/A
@@ -505,6 +506,7 @@ def hist_KNLOS(KNLOS_data):
         data_obs_list = data_no_c.split()
         obs_pos_list.append(data_obs_list)
 
+
     ##Create the list of Updated state data as a two-dimensional list this is parsing portion for Updated State
     for item in range(len(data_real)):
         data_upd = data_real[item][1]
@@ -513,6 +515,7 @@ def hist_KNLOS(KNLOS_data):
         data_no_c = data_upd_str.replace(',', '')
         data_upd_list = data_no_c.split()
         upd_state_list.append(data_upd_list)
+
 
     ## Unpack the X and Y coordinates from the list, both theor and observed
     for place, item in enumerate(obs_pos_list):
@@ -538,10 +541,10 @@ def hist_KNLOS(KNLOS_data):
         diff_list_upd.append(final_upd_state_list[i] - theor_list[i])
 
     ## Histogram Stuff
-    plt.hist(diff_list_obs,bins=20, color = 'blue', edgecolor = 'black')
+    plt.hist(diff_list_upd,bins=20, color = 'blue', edgecolor = 'black')
     plt.xlabel('Error (m)')
     plt.ylabel('Frequency')
-    plt.title("Frequency of Errors(m) of Observed State of Decawave in NLOS scenario")
+    plt.title("Frequency of errors(m) of Decawave after sensor fusion in NLOS scenario")
     plt.show()
     return()
 
@@ -562,8 +565,8 @@ def range_errorKNLOS(KNLOS_data):
     diff_list_upd = []## A list containing the differences between the updated state and theoretical; X then Y)
 
     short_error_obs = []## Error of Observed Position of Decawave when placed at GT posititon from 0-3m
-    med_error_obs = []## Error of Observed Position of Decawave when placed at GT posititon from 3.5-5.5m
-    long_error_obs = []## Error of Observed Position of Decawave when placed at GT position greater than 5.5m
+    med_error_obs = []## Error of Observed Position of Decawave when placed at GT posititon from >3.0-5.5m<
+    long_error_obs = []## Error of Observed Position of Decawave when placed at GT position greater than >=5.5m
 
     short_error_up = []## Error of Updated State of Decawave when placed at GT posititon from 0-3m
     med_error_up = []## Error of Updated State of Decawave when placed at GT posititon from 3.5-6m
@@ -575,6 +578,7 @@ def range_errorKNLOS(KNLOS_data):
             data_real.append(tag_pos[meas])## Real Data
             data_theor.append(tag_pos[0])## Theoretical Data
 
+
     ##Create the list of observed data as a two-dimensional list this is parsing portion for observed
     for item in range(len(data_real)):
         data_obs = data_real[item][0]
@@ -583,6 +587,7 @@ def range_errorKNLOS(KNLOS_data):
         data_no_c = data_obs_str.replace(',', '')
         data_obs_list = data_no_c.split()
         obs_pos_list.append(data_obs_list)
+
 
     ##Create the list of Updated state data as a two-dimensional list this is parsing portion for Updated State
     for item in range(len(data_real)):
@@ -602,7 +607,6 @@ def range_errorKNLOS(KNLOS_data):
         final_obs_list.append(float(X_obs))
         final_obs_list.append(float(Y_obs))
 
-
     ## Unpack X and coordinates from update_state_list (it will be X then Y Coordiante)
     for place, item in enumerate(upd_state_list):
         X_upd_S,Y_upd_S =  upd_state_list[place]
@@ -617,14 +621,21 @@ def range_errorKNLOS(KNLOS_data):
     for i in range(len(theor_list)):
         diff_list_upd.append(final_upd_state_list[i] - theor_list[i])
 
+    diff_list_obs_abs = [abs(x) for x in diff_list_obs]
+    diff_list_upd_abs = [abs(x) for x in diff_list_upd]
+
 #Calculate The relevant statistical data
     meanNLOS_obs = statistics.mean(diff_list_obs)
     stdNLOS_obs= statistics.stdev(diff_list_obs)
-    #meanNLOS_upd = statistics.mean(diff_list_upd)
-    #stdNLOS_upd = statistics.stdev(diff_list_upd)
+    meanNLOS_upd = statistics.mean(diff_list_upd)
+    stdNLOS_upd = statistics.stdev(diff_list_upd)
 
-    print("For Decawave in a NLOS setting the observed mean error is {0}, and standard deviation is {1}".format(meanNLOS_obs,stdNLOS_obs))
-    #print("For Decawave in a NLOS setting the updated mean error is {0}, and standard deviation is {1}".format(meanNLOS_upd,stdNLOS_upd))
+    maxNLOS_obs = max(diff_list_obs)
+    minNLOS_obs=  min(diff_list_obs)
+    maxNLOS_upd = max(diff_list_upd)
+    minNLOS_upd = min(diff_list_upd)
+
+
 
     x_theor =  theor_list[0::2]##Theoertical X Coordinates
     y_theor =  theor_list[1::2]##Theoretical Y Coordinates
@@ -633,13 +644,11 @@ def range_errorKNLOS(KNLOS_data):
     x_up    =  final_upd_state_list[0::2]##Updated X Coordinates
     y_up    =  final_upd_state_list[1::2]##Updated Y Coordinates
 
-    print(y_theor[146:205])
-
     diff_X_obs = []##The list of differences between the X coordiantes observed and theoretical Values
     diff_Y_obs = []##The list of differences between the Y coordiantes observed and theoretical Values
     diff_X_upd = []##The list of differences between the X coordiantes updated and theoretical Values
     diff_Y_upd = []##The list of differences between the Y coordiantes updated and theoretical Values
-
+     
 ##At long last the differences between the two measurements
     for i in range(len(x_theor)):
         diff_X_obs.append(x_obs[i] - x_theor[i])
@@ -650,50 +659,55 @@ def range_errorKNLOS(KNLOS_data):
     #for place, item in enumerate(x_theor):
     #    print(place, '', item)
 
+
 ##Get the Observed Errors based on the theoeretical distances; will include both X and Y
-    short_error_obs.append(diff_X_obs[0:598])
-    med_error_obs.append(diff_X_obs[598:676])
-    long_error_obs.append(diff_X_obs[676::])
+    short_error_obs.append(diff_X_obs[0:535])
+    med_error_obs.append(diff_X_obs[535:613])
+    long_error_obs.append(diff_X_obs[613:])
 
     short_error_obs.append(diff_Y_obs[0:39])
-    short_error_obs.append(diff_Y_obs[136:175])
-    short_error_obs.append(diff_Y_obs[243:355])
-    short_error_obs.append(diff_Y_obs[559:715])
+    short_error_obs.append(diff_Y_obs[73:112])
+    short_error_obs.append(diff_Y_obs[180:292])
+    short_error_obs.append(diff_Y_obs[497:652])
 
-    med_error_obs.append(diff_Y_obs[355:457])
-    med_error_obs.append(diff_Y_obs[715:793])
+    med_error_obs.append(diff_Y_obs[292:394])
+    med_error_obs.append(diff_Y_obs[652:730])
 
-    long_error_obs.append(diff_Y_obs[39:136])
-    long_error_obs.append(diff_Y_obs[175:243])
-    long_error_obs.append(diff_Y_obs[457:550])
-    long_error_obs.append(diff_Y_obs[793::])
+    long_error_obs.append(diff_Y_obs[39:73])
+    long_error_obs.append(diff_Y_obs[112:180])
+    long_error_obs.append(diff_Y_obs[384:497])
+    long_error_obs.append(diff_Y_obs[730:])
 
     ##Get the Updated State Errors based on the theoeretical distances; will include both X and Y
-    short_error_up.append(diff_X_upd[0:598])
-    med_error_up.append(diff_X_upd[598:676])
-    long_error_up.append(diff_X_upd[676::])
+    short_error_up.append(diff_X_upd[0:535])
+    med_error_up.append(diff_X_upd[535:613])
+    long_error_up.append(diff_X_upd[613:])
 
     short_error_up.append(diff_Y_upd[0:39])
-    short_error_up.append(diff_Y_upd[136:175])
-    short_error_up.append(diff_Y_upd[243:355])
-    short_error_up.append(diff_Y_upd[559:715])
+    short_error_up.append(diff_Y_upd[73:112])
+    short_error_up.append(diff_Y_upd[180:292])
+    short_error_up.append(diff_Y_upd[497:652])
 
-    med_error_up.append(diff_Y_upd[355:457])
-    med_error_up.append(diff_Y_upd[715:793])
+    med_error_up.append(diff_Y_upd[292:394])
+    med_error_up.append(diff_Y_upd[652:730])
 
-    long_error_up.append(diff_Y_upd[39:136])
-    long_error_up.append(diff_Y_upd[175:243])
-    long_error_up.append(diff_Y_upd[457:550])
-    long_error_up.append(diff_Y_upd[793::])
+    long_error_up.append(diff_Y_upd[39:73])
+    long_error_up.append(diff_Y_upd[112:180])
+    long_error_up.append(diff_Y_upd[384:497])
+    long_error_up.append(diff_Y_upd[730:])
+
+    #print(short_error_up)
 
     ##There is a formatting problem for the STD function; wont take a list as an argument, this removes it
     error_obs_short = short_error_obs[0] + short_error_obs[1] + short_error_obs[2] + short_error_obs[3] + short_error_obs[4]
     error_obs_med = med_error_obs[0] + med_error_obs[1] + med_error_obs[2]
     error_obs_long = long_error_obs[0] + long_error_obs[1] + long_error_obs[2] + long_error_obs[3] + long_error_obs[4]
 
+
     error_up_short = short_error_up[0] + short_error_up[1] + short_error_up[2] + short_error_up[3] + short_error_up[4]
     error_up_med = med_error_up[0] + med_error_up[1] + med_error_up[2]
     error_up_long = long_error_up[0] + long_error_up[1] + long_error_up[2] + long_error_up[3] + long_error_up[4]
+
 
 ##Calculate Standard Deviation
     std_short_obs = statistics.stdev(error_obs_short)
@@ -705,10 +719,11 @@ def range_errorKNLOS(KNLOS_data):
     std_lon_up   = statistics.stdev(error_up_long)
 
 
-    #print("For Decawave in a LOS setting the mean error is {0}, and standard deviation is {1}".format(meanLOS,stdLOS))
+    print("For Decawave in a NLOS setting the observed mean error is {0}, standard deviation is {1}, max is {2}, and mins is {3}".format(meanNLOS_obs,stdNLOS_obs, maxNLOS_obs, minNLOS_obs))
+    print("For Decawave in a NLOS setting the updated mean error is {0},  standard deviation is {1}, max is {2}, and min is {3}".format(meanNLOS_upd,stdNLOS_upd, maxNLOS_upd, minNLOS_upd))
 
 ## Bar Graph Plotting time
-    ranges = ['0-3', '3.5 - 5.0', '5.5 - 8.5']
+    ranges = ['0-3.5', '3.0 - 5.5', '5.5 - 8.5']
     stds_obs = [std_short_obs, std_med_obs, std_lon_obs]
     std_upd = [std_short_up, std_med_up, std_lon_up]
 
@@ -720,9 +735,10 @@ def range_errorKNLOS(KNLOS_data):
     ax.set_xticks(x)
     ax.set_xticklabels(ranges)
     ax.set_ylabel('Standard Deviation of range error')
-    ax.set_title('Ranges')
+    ax.set_xlabel('Range intervals (m)')
+    ax.set_title('')
     ax.legend()
-    #plt.show()
+    plt.show()
 
 def cdfKNLOS_data(KNLOS_data):
     """
@@ -755,6 +771,7 @@ def cdfKNLOS_data(KNLOS_data):
         data_obs_list = data_no_c.split()
         obs_pos_list.append(data_obs_list)
 
+
     ##Create the list of Updated state data as a two-dimensional list this is parsing portion for Updated State
     for item in range(len(data_real)):
         data_upd = data_real[item][1]
@@ -773,6 +790,7 @@ def cdfKNLOS_data(KNLOS_data):
         final_obs_list.append(float(X_obs))
         final_obs_list.append(float(Y_obs))
 
+    print(final_obs_list[1374])
     ## Unpack X and Y coordinates from update_state_list
     for place, item in enumerate(upd_state_list):
         X_upd_S,Y_upd_S =  upd_state_list[place]
@@ -788,26 +806,100 @@ def cdfKNLOS_data(KNLOS_data):
         diff_list_upd.append(final_upd_state_list[i] - theor_list[i])
 
     cleanedListUpd = [x for x in diff_list_upd if str(x) != 'nan']
-    count_upd, bins_count_upd = np.histogram(cleanedListUpd, bins=10)
+    count_upd, bins_count_upd = np.histogram(cleanedListUpd, bins=50)
     pdf_upd = count_upd / sum(count_upd)
     cdf_upd = np.cumsum(pdf_upd)
 
     cleanedListObs = [x for x in diff_list_obs if str(x) != 'nan']
-    count_obs, bins_count_obs = np.histogram(cleanedListObs, bins=10)
+    count_obs, bins_count_obs = np.histogram(cleanedListObs, bins=50)
     pdf_obs = count_obs / sum(count_obs)
     cdf_obs = np.cumsum(pdf_obs)
 
-    plt.plot(bins_count_upd[1:], cdf_upd, label="CDF Upd")
-    plt.plot(bins_count_obs[1:], cdf_obs, label="CDF Obs")
-    plt.title('Cumulative Density Function(CDF) of Positioning error in KNLOS ')
-    plt.xlabel('Localization Error(m)')
+    plt.plot(bins_count_upd[1:], cdf_upd, label="Sensor fusion")
+    plt.plot(bins_count_obs[1:], cdf_obs, label="Observed state")
+    plt.title('Cumulative distribution function(CDF) of positioning error in NLOS scenario')
+    plt.xlabel('Localization error(m)')
     plt.ylabel('Probability')
     plt.legend()
     plt.show()
 
+def postplot_LOS(LOS_data):
+    """
+    This function should print a nice 2d graph of the plot of the theoretical versus eperimental values
+    superseded on a nice 2d plot
+    :param LOS_data:
+    :return: N/A
+    """
+    i = 0
+    exp_xy = []
+    theor_xy = []
+    x_exper = []
+    y_exper = []
+    for anch_pos in LOS_data:
+        for loc in anch_pos:
+            i=i+1
+            if (i > 1):
+                x,y = loc
+                exp_xy.append(x)
+                exp_xy.append(y)
+            else:
+                x,y = loc
+                theor_xy.append(x)
+                theor_xy.append(y)
+        i = 0
+    x = theor_xy[0::2]
+    y = theor_xy[1::2]
+    print(x)
+    print(y)
+    #figure()
+    #title('')
+    #xlabel('X m')
+    #ylabel('Y m')
+    #plt.plot(x,y, 'b:o')
+    #plt.legend(('dildo'))
+    #plt.show()
+
+
+def postplot_NLOS(KNLOS_data):
+    """
+
+    :param KNLOS_data:
+    :return:
+    """
+    i = 0
+    exp_xy = []
+    theor_xy = []
+    for anch_pos in KNLOS_data:
+        for loc in anch_pos:
+            i=i+1
+            if (i > 1):
+                obs = loc[0]
+                obs = obs.split()
+                print(obs)
+                exp_xy.append(x)
+                exp_xy.append(y)
+            else:
+                x,y = loc
+                theor_xy.append(x)
+                theor_xy.append(y)
+        i = 0
+    xexp = exp_xy[0::2]
+    yexp=  exp_xy[1::2]
+    xtheor = theor_xy[0::2]
+    ytheor = theor_xy[1::2]
+    figure()
+    title('')
+    xlabel('X Position (m)')
+    ylabel('Y Position (m)')
+    plt.plot(xtheor,ytheor, marker = 'o', linestyle='-')
+    plt.legend('Theoretical', loc ="lower right")
+    plt.show()
+
+
 if __name__ == '__main__':
     #theor_los,exp_los = getdataLOS() ## Function returns theoretical and experiment Y_coordinates as a list
-    #data_LOS = parsedataLOS()##Function to return the LOS data's coordinates as tuple w/ theor_first
+    data_LOS = parsedataLOS()##Function to return the LOS data's coordinates as list of tuples w/ theor_first
+    #postplot_LOS(data_LOS)
     #rangerror_LOS(data_LOS)
     #hist_LOS(data_LOS)
     #range_errorLOS(data_LOS)
@@ -817,8 +909,9 @@ if __name__ == '__main__':
     finalKNLOS = finalKNLOSdata(listdata)
     #mean_errorKNLOS(finalKNLOS)
     #hist_KNLOS(finalKNLOS)
-    range_errorKNLOS(finalKNLOS)
+    #range_errorKNLOS(finalKNLOS)
     #cdfKNLOS_data(finalKNLOS)
+    postplot_NLOS(finalKNLOS)
 
 
 
