@@ -866,6 +866,54 @@ def postplot_NLOS(KNLOS_data):
     :param KNLOS_data:
     :return:
     """
+    data_real =  [] ## a list of tuples of real tag measurements in 2D
+    data_theor = [] ## a list of tuples of theoretical tag measurements in 2D
+    diff_list_obs = [] ## A list containing the differences between theoretical and real measurements
+    diff_list_upd = []
+    obs_pos_list = []
+    upd_state_list = []
+    theor_list = [] ## The list of the theoretical position of the tag node; X then Y
+    final_obs_list = []## The list of the observed position of the tag node; X then Y
+    final_upd_state_list = [] ##The list of the updated position of the tag node; X then Y
+
+    ## Go through the KNLOS data and create two lists, one of theoretical and one of Real
+    for tag_pos in KNLOS_data:##The total number of postions the tag is place at each one
+        for meas in range(1,len(tag_pos),1):##goes through each measurement line by line
+            data_real.append(tag_pos[meas])## Real Data
+            data_theor.append(tag_pos[0])## Theoretical Data
+
+    ##Create the list of observed data as a two-dimensional list this is parsing portion for observed
+    for item in range(len(data_real)):
+        data_obs = data_real[item][0]
+        data_obs_str = data_obs.replace("[", "")
+        data_obs_str = data_obs_str.replace(']', '')
+        data_no_c = data_obs_str.replace(',', '')
+        data_obs_list = data_no_c.split()
+        obs_pos_list.append(data_obs_list)
+
+    ##Create the list of Updated state data as a two-dimensional list this is parsing portion for Updated State
+    for item in range(len(data_real)):
+        data_upd = data_real[item][1]
+        data_upd_str = data_upd.replace("[", "")
+        data_upd_str = data_upd_str.replace(']', '')
+        data_no_c = data_upd_str.replace(',', '')
+        data_upd_list = data_no_c.split()
+        upd_state_list.append(data_upd_list)
+
+    ## Unpack the X and Y coordinates from the list, both theor and observed
+    for place, item in enumerate(obs_pos_list):
+        X_obs,Y_obs =  obs_pos_list[place]
+        X_theor,Y_theor = data_theor[place]
+        theor_list.append(X_theor)
+        theor_list.append(Y_theor)
+        final_obs_list.append(float(X_obs))
+        final_obs_list.append(float(Y_obs))
+
+    ## Unpack X and coordinates from update_state_list
+    for place, item in enumerate(upd_state_list):
+        X_upd_S,Y_upd_S =  upd_state_list[place]
+        final_upd_state_list.append(float(X_upd_S))
+        final_upd_state_list.append(float(Y_upd_S))
     i = 0
     exp_xy = []
     theor_xy = []
@@ -873,18 +921,14 @@ def postplot_NLOS(KNLOS_data):
         for loc in anch_pos:
             i=i+1
             if (i > 1):
-                obs = loc[0]
-                obs = obs.split()
-                print(obs)
-                exp_xy.append(x)
-                exp_xy.append(y)
+                pass
             else:
                 x,y = loc
                 theor_xy.append(x)
                 theor_xy.append(y)
         i = 0
-    xexp = exp_xy[0::2]
-    yexp=  exp_xy[1::2]
+    xexp_obs =  final_obs_list[0::2]
+    yexp_obs =  final_obs_list[1::2]
     xtheor = theor_xy[0::2]
     ytheor = theor_xy[1::2]
     figure()
@@ -892,9 +936,9 @@ def postplot_NLOS(KNLOS_data):
     xlabel('X Position (m)')
     ylabel('Y Position (m)')
     plt.plot(xtheor,ytheor, marker = 'o', linestyle='-')
+    plt.scatter(xexp_obs,yexp_obs)
     plt.legend('Theoretical', loc ="lower right")
     plt.show()
-
 
 if __name__ == '__main__':
     #theor_los,exp_los = getdataLOS() ## Function returns theoretical and experiment Y_coordinates as a list
